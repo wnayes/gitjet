@@ -2,8 +2,9 @@
   "name": "gitjet",
   "version": "1.0.0",
   "description": "Fast git log viewer",
-  "main": "main.js",
+  "main": "./src/main/main.js",
   "scripts": {
+    "build": "esbuild ./src/renderer/renderer.tsx --bundle --sourcemap --format=esm --outfile=./src/renderer/dist.js",
     "start": "electron ."
   },
   "repository": "https://github.com/wnayes/gitjet",
@@ -14,11 +15,16 @@
   "author": "Will Nayes",
   "license": "MIT",
   "devDependencies": {
+    "@types/react": "^18.2.64",
+    "@types/react-dom": "^18.2.21",
+    "@types/react-window": "^1.8.8",
     "electron": "^29.1.1",
-    "esbuild": "^0.20.1"
+    "esbuild": "^0.20.1",
+    "typescript": "^5.4.2"
   },
   "dependencies": {
     "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-virtualized-auto-sizer": "^1.0.24",
     "react-window": "^1.8.10",
     "zustand": "^4.5.2"
