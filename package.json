@@ -2,9 +2,9 @@
   "name": "gitjet",
   "version": "1.0.0",
   "description": "Fast git log viewer",
-  "main": "./src/main/main.js",
+  "main": "./src/main/dist.js",
   "scripts": {
-    "build": "esbuild ./src/renderer/renderer.tsx --bundle --sourcemap --format=esm --outfile=./src/renderer/dist.js",
+    "build": "esbuild ./src/main/main.ts --bundle --sourcemap --format=cjs --packages=external --platform=node --outfile=./src/main/dist.js && esbuild ./src/renderer/renderer.tsx --bundle --sourcemap --format=esm --outfile=./src/renderer/dist.js",
     "start": "electron ."
   },
   "repository": "https://github.com/wnayes/gitjet",
@@ -25,6 +25,7 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-resizable-panels": "^2.0.13",
     "react-virtualized-auto-sizer": "^1.0.24",
     "react-window": "^1.8.10",
     "zustand": "^4.5.2"

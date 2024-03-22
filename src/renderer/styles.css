@@ -1,3 +1,13 @@
+:root {
+    --secondary-color: rgb(197, 197, 197);
+    --resizer-color: rgb(161, 161, 161);
+    --row-hover-bg-color: rgb(209, 209, 209);
+    --row-selected-bg-color: rgb(167, 214, 223);
+    --row-body-text-color: rgb(83, 83, 83);
+
+    --add-color: 
+}
+
 html, body {
     height: 100%;
     width: 100%;
@@ -6,11 +16,6 @@ html, body {
     box-sizing: border-box;
     font-family: Arial, Helvetica, sans-serif;
     font-size: 14px;
-}
-
-body {
-    padding-left: 4px;
-    padding-top: 4px;
 }
 
 .app {
@@ -37,6 +42,8 @@ body {
     width: 100%;
     display: flex;
     align-items: center;
+    padding-left: 4px;
+    box-sizing: border-box;
 }
 
 .header {
@@ -46,6 +53,8 @@ body {
 .list {
     height: 100%;
     width: 100%;
+    box-sizing: border-box;
+    user-select: none;
 }
 
 .hash {
@@ -54,12 +63,85 @@ body {
 
 .dataRow {
     display: flex;
+    align-items: center;
     flex-wrap: nowrap;
     cursor: default;
+    box-sizing: border-box;
+    padding-left: 4px;
+}
+.dataRow.selected {
+    background-color: var(--row-selected-bg-color);
+}
+.dataRow:not(.selected):hover {
+    background-color: var(--row-hover-bg-color);
 }
 
 .dataCell {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+}
+
+.messageBody {
+    color: var(--row-body-text-color);
+}
+
+.panelResizer {
+    background-color: var(--resizer-color);
+}
+
+.revisionDataContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.revisionDataTitle {
+    background-color: var(--secondary-color);
+    height: 24px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.messageDisplay {
+    overflow: auto;
+    white-space: pre-wrap;
+    font-family: 'Courier New', Courier, monospace;
+    height: 100%;
+}
+
+.fileChangesList {
+    overflow: auto;
+    white-space: pre-wrap;
+    height: 100%;
+    user-select: none;
+}
+
+.fileChangeRow {
+    padding: 2px 4px;
+    font-size: 14px;
+    cursor: default;
+    display: flex;
+}
+.fileChangeRow.selected {
+    background-color: var(--row-selected-bg-color);
+}
+.fileChangeRow:not(.selected):hover {
+    background-color: var(--row-hover-bg-color);
+}
+
+.fileChangeType {
+    display: inline-block;
+    width: 16px;
+    flex-shrink: 0;
+}
+.fileChangeType.add {
+    color: purple;
+}
+.fileChangeType.delete {
+    color: rgb(84, 0, 0);
+}
+.fileChangeType.modify, .fileChangeType.rename {
+    color: blue;
 }

@@ -1,5 +1,12 @@
 import { createRoot } from "react-dom/client";
-import { useCallback, useLayoutEffect, useMemo } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   FixedSizeList as List,
   ListChildComponentProps,
@@ -7,6 +14,13 @@ import {
 } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { useGitStore } from "./store";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import {
+  GitFileChange,
+  GitFileChangeType,
+  GitRevisionData,
+  gitFileChangeEnumToTypeString,
+} from "../shared/GitTypes";
 
 function useElectronCommunication(): void {
   const setBranch = useGitStore((state) => state.setBranch);
@@ -37,30 +51,14 @@ const CommitHash = ({ hash }: { hash: string }) => {
 };
 
 const AuthorDisplay = ({ author }: { author: string }) => {
-  const formatted = useMemo(
-    () => author.substring(0, author.indexOf(" <")),
-    [author]
-  );
-  return <>{formatted}</>;
+  return <>{author}</>;
 };
 
-function convertTimezoneOffsetToMinutes(offsetString: string) {
-  const hours = parseInt(offsetString.slice(0, 3), 10);
-  const minutes = parseInt(offsetString.slice(3), 10);
-  const totalOffsetMinutes = hours * 60 + minutes;
-  return totalOffsetMinutes;
-}
-
-const DateDisplay = ({ gitRawDateString }: { gitRawDateString: string }) => {
+const DateDisplay = ({ gitDateIsoString }: { gitDateIsoString: string }) => {
   const formattedData = useMemo(() => {
-    const pieces = gitRawDateString.split(" ");
-    const unixTimestamp = parseInt(pieces[0], 10);
-    const timezoneOffsetMinutes = convertTimezoneOffsetToMinutes(pieces[1]);
-    const adjustedTimestamp =
-      unixTimestamp * 1000 + timezoneOffsetMinutes * 60 * 1000;
-    const date = new Date(adjustedTimestamp);
+    const date = new Date(gitDateIsoString);
     return date.toLocaleString();
-  }, [gitRawDateString]);
+  }, [gitDateIsoString]);
   return <>{formattedData}</>;
 };
 
@@ -68,29 +66,34 @@ const Row = ({ index, style }: ListChildComponentProps) => {
   const colWidths = useColumnWidths();
   const revision = useGitStore((state) => state.revisions[index]);
   const revisionData = useGitStore((state) => state.revisionData[revision]);
+  const selectedRevision = useGitStore((state) => state.selectedRevision);
+
+  let rowClasses = "dataRow";
+  if (revision === selectedRevision) {
+    rowClasses += " selected";
+  }
+
   return (
-    <div className="dataRow" style={style}>
+    <div className={rowClasses} style={style} data-index={index}>
       <div className="dataCell" style={getColumnWidthStyle(colWidths[0])}>
         <CommitHash hash={revision} />
       </div>
       <div
         className="dataCell"
         style={getColumnWidthStyle(colWidths[1])}
-        title={revisionData?.author ?? ""}
+        title={`${revisionData?.author} <${revisionData?.authorEmail}>`}
       >
         {revisionData?.author && <AuthorDisplay author={revisionData.author} />}
       </div>
       <div className="dataCell" style={getColumnWidthStyle(colWidths[2])}>
         {revisionData?.authorDate && (
-          <DateDisplay gitRawDateString={revisionData.authorDate} />
+          <DateDisplay gitDateIsoString={revisionData.authorDate} />
         )}
       </div>
-      <div
-        className="dataCell"
-        style={getColumnWidthStyle(colWidths[3])}
-        title={revisionData?.message ?? ""}
-      >
-        {revisionData?.message}
+      <div className="dataCell" style={getColumnWidthStyle(colWidths[3])}>
+        <span>{revisionData?.subject}</span>
+        &nbsp;
+        <span className="messageBody">{revisionData?.body}</span>
       </div>
     </div>
   );
@@ -101,6 +104,21 @@ const BranchSelect = () => {
   return <div>Branch: {branch}</div>;
 };
 
+function tryLoadRevisionData(
+  startIndex: number,
+  endIndex: number,
+  loadedRevisions: Set<string>
+): void {
+  const state = useGitStore.getState();
+  const revisionsToLoad = state.revisions
+    .slice(startIndex, endIndex)
+    .filter((revision) => !loadedRevisions.has(revision));
+  if (revisionsToLoad.length > 0) {
+    revisionsToLoad.forEach((revision) => loadedRevisions.add(revision));
+    gitjet.loadRevisionData(revisionsToLoad);
+  }
+}
+
 interface IDataListProps {
   height: number;
   width: number;
@@ -109,18 +127,52 @@ interface IDataListProps {
 const DataList = ({ height, width }: IDataListProps) => {
   const revisions = useGitStore((state) => state.revisions);
 
-  const onItemsRendered = useCallback(
-    (props: ListOnItemsRenderedProps) => {
-      const revisionData = useGitStore.getState().revisionData;
-      const revisionsToLoad = revisions
-        .slice(props.visibleStartIndex, props.visibleStopIndex)
-        .filter((revision) => !revisionData.hasOwnProperty(revision));
-      if (revisionsToLoad.length > 0) {
-        gitjet.loadRevisionData(revisionsToLoad);
+  const loadedRevisions = useRef<Set<string>>();
+  if (!loadedRevisions.current) {
+    loadedRevisions.current = new Set();
+  }
+
+  const onItemsRendered = useCallback((props: ListOnItemsRenderedProps) => {
+    tryLoadRevisionData(
+      props.visibleStartIndex,
+      props.visibleStopIndex,
+      loadedRevisions.current!
+    );
+    tryLoadRevisionData(
+      props.overscanStartIndex,
+      props.overscanStopIndex,
+      loadedRevisions.current!
+    );
+  }, []);
+
+  const listContainerElRef = useRef<HTMLDivElement>();
+
+  const setSelectedRevision = useGitStore((state) => state.setSelectedRevision);
+
+  const onListElementClicked = useCallback(
+    (event: MouseEvent) => {
+      const targetElement = event.target as Element;
+      if (targetElement) {
+        const rowElement = targetElement.closest(".dataRow") as HTMLDivElement;
+        if (rowElement) {
+          const dataIndex = parseInt(rowElement.dataset.index!, 10);
+          if (dataIndex >= 0) {
+            setSelectedRevision(revisions[dataIndex]);
+          }
+        }
       }
     },
-    [revisions]
+    [setSelectedRevision, revisions]
   );
+
+  useEffect(() => {
+    const containerEl = listContainerElRef.current;
+    if (containerEl) {
+      containerEl.addEventListener("click", onListElementClicked);
+      return () =>
+        containerEl.removeEventListener("click", onListElementClicked);
+    }
+  });
 
   return (
     <List
@@ -129,14 +181,138 @@ const DataList = ({ height, width }: IDataListProps) => {
       itemSize={22}
       width={width}
       onItemsRendered={onItemsRendered}
+      overscanCount={10}
+      innerRef={listContainerElRef}
     >
       {Row}
     </List>
   );
 };
 
+interface IFileChangeRowProps {
+  change: GitFileChange;
+  selected?: boolean;
+  onClick?: (change: GitFileChange) => void;
+  onDoubleClick?: (change: GitFileChange) => void;
+}
+
+const FileChangeRow = ({
+  change,
+  selected,
+  onClick,
+  onDoubleClick,
+}: IFileChangeRowProps) => {
+  let rowClasses = "fileChangeRow";
+  if (selected) {
+    rowClasses += " selected";
+  }
+
+  const onRowClick = useCallback(() => onClick?.(change), [change, onClick]);
+  const onRowDoubleClick = useCallback(
+    () => onDoubleClick?.(change),
+    [change, onDoubleClick]
+  );
+
+  let changeTypeClasses = "fileChangeType";
+  switch (change.type) {
+    case GitFileChangeType.Add:
+      changeTypeClasses += " add";
+      break;
+    case GitFileChangeType.Delete:
+      changeTypeClasses += " delete";
+      break;
+    case GitFileChangeType.Modify:
+      changeTypeClasses += " modify";
+      break;
+    case GitFileChangeType.Rename:
+      changeTypeClasses += " rename";
+      break;
+  }
+
+  return (
+    <div
+      className={rowClasses}
+      onClick={onRowClick}
+      onDoubleClick={onRowDoubleClick}
+    >
+      <span className={changeTypeClasses}>
+        {gitFileChangeEnumToTypeString(change.type)}
+      </span>{" "}
+      {change.path}
+      {change.newPath && ` → ${change.newPath}`}
+    </div>
+  );
+};
+
+interface IFileChangesListProps {
+  revision: string;
+  revisionData: GitRevisionData;
+}
+
+const FileChangesList = ({ revision, revisionData }: IFileChangesListProps) => {
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+
+  const onRowClick = useCallback((change: GitFileChange) => {
+    setSelectedPath(change.path);
+  }, []);
+
+  const onRowDoubleClick = useCallback(
+    (change: GitFileChange) => {
+      gitjet.launchDiffTool(revision, change.path);
+    },
+    [revision]
+  );
+
+  return (
+    <div className="fileChangesList">
+      {revisionData.changes?.map((change) => {
+        return (
+          <FileChangeRow
+            change={change}
+            key={change.path}
+            selected={change.path === selectedPath}
+            onClick={onRowClick}
+            onDoubleClick={onRowDoubleClick}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
+interface IRevisionDetailsProps {
+  revision: string;
+}
+
+const RevisionDetails = ({ revision }: IRevisionDetailsProps) => {
+  const revisionData = useGitStore((state) => state.revisionData[revision]);
+  if (!revisionData) {
+    return null;
+  }
+
+  return (
+    <>
+      <PanelGroup direction="vertical">
+        <Panel minSize={5} defaultSize={40}>
+          <div className="messageDisplay">
+            {revisionData.subject}
+            {"\n\n"}
+            {revisionData.body}
+          </div>
+        </Panel>
+        <PanelResizeHandle className="panelResizer" style={{ height: 2 }} />
+        <Panel minSize={5}>
+          <FileChangesList revision={revision} revisionData={revisionData} />
+        </Panel>
+      </PanelGroup>
+    </>
+  );
+};
+
 const App = () => {
   useElectronCommunication();
+
+  const selectedRevision = useGitStore((state) => state.selectedRevision);
 
   return (
     <div className="app">
@@ -145,13 +321,25 @@ const App = () => {
         <input type="text" className="searchInput" />
       </div>
       <TableHeader />
-      <div className="list">
-        <AutoSizer>
-          {({ height, width }) => {
-            return <DataList height={height} width={width} />;
-          }}
-        </AutoSizer>
-      </div>
+      <PanelGroup direction="vertical">
+        <Panel maxSize={75}>
+          <div className="list">
+            <AutoSizer>
+              {({ height, width }) => {
+                return <DataList height={height} width={width} />;
+              }}
+            </AutoSizer>
+          </div>
+        </Panel>
+        {!!selectedRevision && (
+          <>
+            <PanelResizeHandle className="panelResizer" style={{ height: 4 }} />
+            <Panel maxSize={75}>
+              <RevisionDetails revision={selectedRevision} />
+            </Panel>
+          </>
+        )}
+      </PanelGroup>
     </div>
   );
 };

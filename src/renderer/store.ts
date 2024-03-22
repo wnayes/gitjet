@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { RevisionDataArgs, RevisionsArgs } from "./gitjetMain";
+import { GitFileChangeType, GitRevisionData } from "../shared/GitTypes";
 
 export interface GitState {
   branch: string;
@@ -9,20 +10,13 @@ export interface GitState {
   setBranch(branch: string): void;
   setRevisions(args: RevisionsArgs): void;
   setRevisionData(args: RevisionDataArgs): void;
-}
-
-export interface GitRevisionData {
-  author: string | null;
-  authorDate: string | null;
-  message: string | null;
+  setSelectedRevision(revision: string | undefined): void;
 }
 
 export const useGitStore = create<GitState>((set) => ({
   branch: "",
-  revisions: ["one", "two"],
+  revisions: [],
   revisionData: {},
-  selectRevision: (revision: string) =>
-    set(() => ({ selectedRevision: revision })),
   setBranch: (branch: string) => set(() => ({ branch: branch })),
   setRevisions: (args: RevisionsArgs) => {
     return set((state) => {
@@ -41,4 +35,6 @@ export const useGitStore = create<GitState>((set) => ({
       return { revisionData };
     });
   },
+  setSelectedRevision: (revision: string | undefined) =>
+    set(() => ({ selectedRevision: revision })),
 }));

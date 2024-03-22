@@ -1,4 +1,4 @@
-import { GitRevisionData } from "./store";
+import { GitRevisionData } from "../shared/GitTypes";
 
 declare global {
   const gitjet: GitJetMain;
@@ -6,6 +6,7 @@ declare global {
 
 export interface GitJetMain {
   ready(): void;
+  launchDiffTool(revision: string, path: string): void;
   onSetBranch(callback: (branch: string) => void): void;
   onReceiveRevisions(callback: (args: RevisionsArgs) => void): void;
   onReceiveRevisionData(callback: (args: RevisionDataArgs) => void): void;
