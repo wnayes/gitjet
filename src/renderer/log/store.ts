@@ -1,6 +1,9 @@
 import { create } from "zustand";
-import { RevisionsArgs } from "../gitjetMain";
-import { GitRevisionData, RevisionDataArgs } from "../../shared/GitTypes";
+import {
+  GitRevisionData,
+  RevisionDataArgs,
+  RevisionsArgs,
+} from "../../shared/GitTypes";
 
 export interface GitState {
   repository: string;
@@ -33,10 +36,7 @@ export const useGitStore = create<GitState>((set) => ({
     return set((state) => {
       let revisions = state.revisions;
       if (args.revisions.length > 0) {
-        revisions = args.revisions;
-        if (args.incremental) {
-          revisions = [...state.revisions, ...args.revisions];
-        }
+        revisions = [...state.revisions, ...args.revisions];
       }
       return { revisions, revisionsLoaded: args.allLoaded };
     });

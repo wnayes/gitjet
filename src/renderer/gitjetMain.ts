@@ -1,4 +1,4 @@
-import { GitRevisionData, RevisionDataArgs } from "../shared/GitTypes";
+import { RevisionDataArgs, RevisionsArgs } from "../shared/GitTypes";
 
 declare global {
   const gitjet: GitJetMain;
@@ -17,10 +17,4 @@ export interface RepositoryInfoArgs {
   repository: string;
   worktree: string;
   branch: string;
-}
-
-export interface RevisionsArgs {
-  revisions: string[];
-  incremental: boolean;
-  allLoaded: boolean;
 }

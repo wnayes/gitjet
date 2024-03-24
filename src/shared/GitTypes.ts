@@ -1,3 +1,8 @@
+export interface RevisionsArgs {
+  revisions: string[];
+  allLoaded: boolean;
+}
+
 export interface RevisionDataArgs {
   data: { [revision: string]: GitRevisionData };
 }

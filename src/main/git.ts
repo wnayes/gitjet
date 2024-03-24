@@ -2,9 +2,65 @@ import {
   GitFileChange,
   GitFileChangeType,
   GitRevisionData,
+  RevisionsArgs,
   gitFileChangeTypeStringToEnum,
 } from "../shared/GitTypes";
-import { exec } from "node:child_process";
+import { arrayAppend } from "../shared/arrays";
+import { spawn, exec } from "node:child_process";
+
+export function loadRevisionList(
+  repoPath: string,
+  branch: string,
+  onGotRevisions: (args: RevisionsArgs) => void
+): void {
+  const revlist = spawn("git", [
+    "-C",
+    repoPath,
+    "rev-list",
+    "--first-parent",
+    branch,
+  ]);
+
+  const OneSecondMs = 1000;
+  let lastSendTime = performance.now();
+  let revisionsToSend: string[] = [];
+  let totalRevisionsSent = 0;
+
+  // This is called pretty frequently. To avoid bombarding the web side with
+  // state updates, we throttle the revision data notifications after we have
+  // sent 1000 revisions.
+  revlist.stdout.on("data", (data) => {
+    const revisions = data.toString().split("\n");
+    revisions.pop(); // Blank line.
+
+    arrayAppend(revisionsToSend, revisions);
+
+    if (
+      totalRevisionsSent < 1000 ||
+      performance.now() - lastSendTime > OneSecondMs
+    ) {
+      onGotRevisions({
+        revisions: revisionsToSend,
+        allLoaded: false,
+      });
+
+      totalRevisionsSent += revisions.length;
+      lastSendTime = performance.now();
+      revisionsToSend.length = 0;
+    }
+  });
+
+  revlist.stderr.on("data", (data) => {
+    console.error(`stderr: ${data}`);
+  });
+
+  revlist.on("close", (code) => {
+    onGotRevisions({
+      revisions: revisionsToSend,
+      allLoaded: true,
+    });
+  });
+}
 
 export function loadRevisionData(
   repoPath: string,

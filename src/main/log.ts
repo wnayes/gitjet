@@ -1,14 +1,8 @@
 import { BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
-import { spawn, exec } from "node:child_process";
-import {
-  GitFileChange,
-  GitFileChangeType,
-  gitFileChangeTypeStringToEnum,
-  GitRevisionData,
-  RevisionDataArgs,
-} from "../shared/GitTypes";
-import { loadRevisionData } from "./git";
+import { exec } from "node:child_process";
+import { RevisionDataArgs } from "../shared/GitTypes";
+import { loadRevisionData, loadRevisionList } from "./git";
 
 let mainWindow: BrowserWindow;
 
@@ -23,38 +17,8 @@ export function launchLogWindow() {
       branch,
     });
 
-    const revlist = spawn("git", [
-      "-C",
-      repoPath,
-      "rev-list",
-      "--first-parent",
-      branch,
-    ]);
-
-    let sentSome = false;
-
-    revlist.stdout.on("data", (data) => {
-      //console.log(`stdout: ${data}`);
-      const revisions = data.toString().split("\n");
-      revisions.pop(); // Blank line.
-      mainWindow.webContents.send("revisions", {
-        revisions: revisions,
-        incremental: sentSome,
-        allLoaded: false,
-      });
-      sentSome = true;
-    });
-
-    revlist.stderr.on("data", (data) => {
-      console.error(`stderr: ${data}`);
-    });
-
-    revlist.on("close", (code) => {
-      mainWindow.webContents.send("revisions", {
-        revisions: [],
-        incremental: true,
-        allLoaded: true,
-      });
+    loadRevisionList(repoPath, branch, (args) => {
+      mainWindow.webContents.send("revisions", args);
     });
   });
 
