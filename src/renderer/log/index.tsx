@@ -20,7 +20,7 @@ import {
   GitFileChangeType,
   GitRevisionData,
   gitFileChangeEnumToTypeString,
-} from "../shared/GitTypes";
+} from "../../shared/GitTypes";
 
 function useElectronCommunication(): void {
   const setBranch = useGitStore((state) => state.setBranch);

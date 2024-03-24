@@ -123,7 +123,7 @@ export function launchLogWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join("src", "renderer", "index.html"));
+  mainWindow.loadFile(path.join("src", "renderer", "log", "index.html"));
 
   // mainWindow.webContents.openDevTools()
 }

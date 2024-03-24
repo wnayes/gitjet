@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { RevisionDataArgs, RevisionsArgs } from "./gitjetMain";
-import { GitFileChangeType, GitRevisionData } from "../shared/GitTypes";
+import { RevisionDataArgs, RevisionsArgs } from "../gitjetMain";
+import { GitRevisionData } from "../../shared/GitTypes";
 
 export interface GitState {
   branch: string;

@@ -4,7 +4,7 @@
   "description": "Fast git log viewer",
   "main": "./src/main/dist.js",
   "scripts": {
-    "build": "esbuild ./src/main/main.ts --bundle --sourcemap --format=cjs --packages=external --platform=node --outfile=./src/main/dist.js && esbuild ./src/renderer/renderer.tsx --bundle --sourcemap --format=esm --outfile=./src/renderer/dist.js",
+    "build": "esbuild ./src/main/main.ts --bundle --sourcemap --format=cjs --packages=external --platform=node --outfile=./src/main/dist.js && esbuild ./src/renderer/log/index.tsx --bundle --sourcemap --format=esm --outfile=./src/renderer/log/dist.js",
     "start": "electron ."
   },
   "repository": "https://github.com/wnayes/gitjet",
