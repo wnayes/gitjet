@@ -7,15 +7,22 @@ declare global {
 export interface GitJetMain {
   ready(): void;
   launchDiffTool(revision: string, path: string): void;
-  onSetBranch(callback: (branch: string) => void): void;
+  onReceiveRepositoryInfo(callback: (args: RepositoryInfoArgs) => void): void;
   onReceiveRevisions(callback: (args: RevisionsArgs) => void): void;
   onReceiveRevisionData(callback: (args: RevisionDataArgs) => void): void;
   loadRevisionData(revisions: string[]): void;
 }
 
+export interface RepositoryInfoArgs {
+  repository: string;
+  worktree: string;
+  branch: string;
+}
+
 export interface RevisionsArgs {
   revisions: string[];
   incremental: boolean;
+  allLoaded: boolean;
 }
 
 export interface RevisionDataArgs {

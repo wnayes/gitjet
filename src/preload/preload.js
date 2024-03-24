@@ -7,8 +7,8 @@ contextBridge.exposeInMainWorld("gitjet", {
     ipcRenderer.send("launchDiffTool", revision, path);
   },
 
-  onSetBranch: (callback) => {
-    ipcRenderer.addListener("setBranch", (src, branch) => callback(branch));
+  onReceiveRepositoryInfo: (callback) => {
+    ipcRenderer.addListener("repositoryInfo", (src, args) => callback(args));
   },
 
   onReceiveRevisions: (callback) => {

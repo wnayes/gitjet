@@ -15,7 +15,11 @@ const branch = "main";
 
 export function launchLogWindow() {
   ipcMain.on("ready", () => {
-    mainWindow.webContents.send("setBranch", branch);
+    mainWindow.webContents.send("repositoryInfo", {
+      repository: repoPath,
+      worktree: repoPath,
+      branch,
+    });
 
     const revlist = spawn("git", [
       "-C",
@@ -34,6 +38,7 @@ export function launchLogWindow() {
       mainWindow.webContents.send("revisions", {
         revisions: revisions,
         incremental: sentSome,
+        allLoaded: false,
       });
       sentSome = true;
     });
@@ -43,7 +48,11 @@ export function launchLogWindow() {
     });
 
     revlist.on("close", (code) => {
-      console.log(`rev-list process exited with code ${code}`);
+      mainWindow.webContents.send("revisions", {
+        revisions: [],
+        incremental: true,
+        allLoaded: true,
+      });
     });
   });
 

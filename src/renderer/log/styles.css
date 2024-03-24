@@ -25,6 +25,20 @@ html, body {
     flex-direction: column;
 }
 
+.breadcrumbs {
+    height: 20px;
+    flex-shrink: 0;
+    padding-left: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb:not(:last-child)::after {
+    display: inline-block;
+    margin: 0 0.5rem;
+    content: "→"
+}
+
 .toolbar {
     height: 40px;
     display: flex;

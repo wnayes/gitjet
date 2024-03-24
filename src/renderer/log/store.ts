@@ -3,10 +3,15 @@ import { RevisionDataArgs, RevisionsArgs } from "../gitjetMain";
 import { GitRevisionData } from "../../shared/GitTypes";
 
 export interface GitState {
+  repository: string;
+  worktree: string;
   branch: string;
   revisions: string[];
+  revisionsLoaded: boolean;
   revisionData: { [revision: string]: GitRevisionData | null | undefined };
   selectedRevision?: string;
+  setRepository(repository: string): void;
+  setWorktree(worktree: string): void;
   setBranch(branch: string): void;
   setRevisions(args: RevisionsArgs): void;
   setRevisionData(args: RevisionDataArgs): void;
@@ -14,17 +19,26 @@ export interface GitState {
 }
 
 export const useGitStore = create<GitState>((set) => ({
+  repository: "",
+  worktree: "",
   branch: "",
   revisions: [],
+  revisionsLoaded: false,
   revisionData: {},
-  setBranch: (branch: string) => set(() => ({ branch: branch })),
+
+  setRepository: (repository: string) => set(() => ({ repository })),
+  setWorktree: (worktree: string) => set(() => ({ worktree })),
+  setBranch: (branch: string) => set(() => ({ branch })),
   setRevisions: (args: RevisionsArgs) => {
     return set((state) => {
-      let revisions = args.revisions;
-      if (args.incremental) {
-        revisions = [...state.revisions, ...args.revisions];
+      let revisions = state.revisions;
+      if (args.revisions.length > 0) {
+        revisions = args.revisions;
+        if (args.incremental) {
+          revisions = [...state.revisions, ...args.revisions];
+        }
       }
-      return { revisions };
+      return { revisions, revisionsLoaded: args.allLoaded };
     });
   },
   setRevisionData: (args: RevisionDataArgs) => {

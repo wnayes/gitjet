@@ -1,6 +1,6 @@
 import { useLayoutEffect } from "react";
 import { useGitStore } from "../store";
-import { BranchSelect } from "./BranchSelect";
+import { LogStateBreadcrumbs } from "./Breadcrumbs";
 import { TableHeader } from "./TableHeader";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -8,12 +8,18 @@ import { DataList } from "./DataList";
 import { RevisionDetails } from "./RevisionDetails";
 
 function useElectronCommunication(): void {
+  const setRepository = useGitStore((state) => state.setRepository);
+  const setWorktree = useGitStore((state) => state.setWorktree);
   const setBranch = useGitStore((state) => state.setBranch);
   const setRevisions = useGitStore((state) => state.setRevisions);
   const setRevisionData = useGitStore((state) => state.setRevisionData);
 
   useLayoutEffect(() => {
-    gitjet.onSetBranch((branch) => setBranch(branch));
+    gitjet.onReceiveRepositoryInfo((args) => {
+      setRepository(args.repository);
+      setWorktree(args.worktree);
+      setBranch(args.branch);
+    });
     gitjet.onReceiveRevisions((args) => setRevisions(args));
     gitjet.onReceiveRevisionData((args) => setRevisionData(args));
     gitjet.ready();
@@ -27,8 +33,8 @@ export const App = () => {
 
   return (
     <div className="app">
+      <LogStateBreadcrumbs />
       <div className="toolbar">
-        <BranchSelect />
         <input type="text" className="searchInput" />
       </div>
       <TableHeader />
