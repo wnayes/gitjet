@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { RevisionDataArgs, RevisionsArgs } from "../gitjetMain";
-import { GitRevisionData } from "../../shared/GitTypes";
+import { RevisionsArgs } from "../gitjetMain";
+import { GitRevisionData, RevisionDataArgs } from "../../shared/GitTypes";
 
 export interface GitState {
   repository: string;
@@ -43,9 +43,8 @@ export const useGitStore = create<GitState>((set) => ({
   },
   setRevisionData: (args: RevisionDataArgs) => {
     return set((state) => {
-      let { revision, data } = args;
-      const revisionData = { ...state.revisionData };
-      revisionData[revision] = data;
+      let { data } = args;
+      const revisionData = { ...state.revisionData, ...data };
       return { revisionData };
     });
   },

@@ -1,3 +1,7 @@
+export interface RevisionDataArgs {
+  data: { [revision: string]: GitRevisionData };
+}
+
 export interface GitRevisionData {
   author: string | null;
   authorEmail: string | null;
