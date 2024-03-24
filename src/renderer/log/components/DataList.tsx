@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useGitStore } from "../store";
-import { FixedSizeList as List, ListOnItemsRenderedProps } from "react-window";
+import {
+  FixedSizeList,
+  FixedSizeList as List,
+  ListOnItemsRenderedProps,
+} from "react-window";
 import { Row } from "./Row";
+import { useResizeHandler } from "../../hooks/useResizeHandler";
 
 function tryLoadRevisionData(
   startIndex: number,
@@ -25,6 +30,7 @@ interface IDataListProps {
 
 export const DataList = ({ height, width }: IDataListProps) => {
   const revisions = useGitStore((state) => state.revisions);
+  const selectedDataIndex = useRef<number>(-1);
 
   const loadedRevisions = useRef<Set<string>>();
   if (!loadedRevisions.current) {
@@ -44,6 +50,7 @@ export const DataList = ({ height, width }: IDataListProps) => {
     );
   }, []);
 
+  const listRef = useRef<FixedSizeList<any> | null>(null);
   const listContainerElRef = useRef<HTMLDivElement>();
 
   const setSelectedRevision = useGitStore((state) => state.setSelectedRevision);
@@ -56,6 +63,7 @@ export const DataList = ({ height, width }: IDataListProps) => {
         if (rowElement) {
           const dataIndex = parseInt(rowElement.dataset.index!, 10);
           if (dataIndex >= 0) {
+            selectedDataIndex.current = dataIndex;
             setSelectedRevision(revisions[dataIndex]);
           }
         }
@@ -63,6 +71,14 @@ export const DataList = ({ height, width }: IDataListProps) => {
     },
     [setSelectedRevision, revisions]
   );
+
+  const onListResize = useCallback(() => {
+    if (selectedDataIndex.current >= 0) {
+      listRef.current?.scrollToItem(selectedDataIndex.current);
+    }
+  }, []);
+
+  useResizeHandler(listContainerElRef, onListResize);
 
   useEffect(() => {
     const containerEl = listContainerElRef.current;
@@ -82,7 +98,8 @@ export const DataList = ({ height, width }: IDataListProps) => {
       onItemsRendered={onItemsRendered}
       itemKey={(i) => revisions[i]}
       overscanCount={10}
-      innerRef={listContainerElRef}
+      ref={listRef}
+      outerRef={listContainerElRef}
     >
       {Row}
     </List>
