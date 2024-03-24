@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { ListChildComponentProps } from "react-window";
 import { useGitStore } from "../store";
 import { getColumnWidthStyle, useColumnWidths } from "../constants";
+import { GitRevisionData } from "../../../shared/GitTypes";
 
 const HashAbbrLength = 8;
 
@@ -22,18 +23,31 @@ const DateDisplay = ({ gitDateIsoString }: { gitDateIsoString: string }) => {
 };
 
 export const Row = ({ index, style }: ListChildComponentProps) => {
-  const colWidths = useColumnWidths();
   const revision = useGitStore((state) => state.revisions[index]);
   const revisionData = useGitStore((state) => state.revisionData[revision]);
-  const selectedRevision = useGitStore((state) => state.selectedRevision);
+  const selected = useGitStore((state) => revision === state.selectedRevision);
 
   let rowClasses = "dataRow";
-  if (revision === selectedRevision) {
+  if (selected) {
     rowClasses += " selected";
   }
 
   return (
     <div className={rowClasses} style={style} data-index={index}>
+      <RowInternal revision={revision} revisionData={revisionData} />
+    </div>
+  );
+};
+
+interface IRowInternalProps {
+  revision: string;
+  revisionData: GitRevisionData | null | undefined;
+}
+
+const RowInternal = memo(({ revision, revisionData }: IRowInternalProps) => {
+  const colWidths = useColumnWidths();
+  return (
+    <>
       <div className="dataCell" style={getColumnWidthStyle(colWidths[0])}>
         <CommitHash hash={revision} />
       </div>
@@ -54,6 +68,6 @@ export const Row = ({ index, style }: ListChildComponentProps) => {
         &nbsp;
         <span className="messageBody">{revisionData?.body}</span>
       </div>
-    </div>
+    </>
   );
-};
+});

@@ -80,6 +80,7 @@ export const DataList = ({ height, width }: IDataListProps) => {
       itemSize={22}
       width={width}
       onItemsRendered={onItemsRendered}
+      itemKey={(i) => revisions[i]}
       overscanCount={10}
       innerRef={listContainerElRef}
     >

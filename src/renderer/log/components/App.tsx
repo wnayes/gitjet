@@ -6,6 +6,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { DataList } from "./DataList";
 import { RevisionDetails } from "./RevisionDetails";
+import { SearchBox } from "./SearchBox";
 
 function useElectronCommunication(): void {
   const setRepository = useGitStore((state) => state.setRepository);
@@ -34,9 +35,7 @@ export const App = () => {
   return (
     <div className="app">
       <LogStateBreadcrumbs />
-      <div className="toolbar">
-        <input type="text" className="searchInput" />
-      </div>
+      <SearchBox />
       <TableHeader />
       <PanelGroup direction="vertical">
         <Panel maxSize={75}>
