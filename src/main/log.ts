@@ -10,16 +10,42 @@ const repoPath = "/home/wnayes/code/TypeScript";
 const branch = "main";
 
 export function launchLogWindow() {
+  let ready = false;
+  let messagesToSend: [string, ...args: any[]][] = [];
+
+  function startRevisionListLoad() {
+    loadRevisionList(repoPath, branch, (args) => {
+      if (!ready) {
+        messagesToSend.push(["revisions", args]);
+      } else {
+        mainWindow.webContents.send("revisions", args);
+      }
+    });
+  }
+
+  // Start the revision list load immediately, and send any data once the
+  // browser window renders.
+  startRevisionListLoad();
+
   ipcMain.on("ready", () => {
+    const wasAlreadyReady = ready;
+    ready = true;
+
     mainWindow.webContents.send("repositoryInfo", {
       repository: repoPath,
       worktree: repoPath,
       branch,
     });
 
-    loadRevisionList(repoPath, branch, (args) => {
-      mainWindow.webContents.send("revisions", args);
-    });
+    for (const messageToSend of messagesToSend) {
+      mainWindow.webContents.send(...messageToSend);
+    }
+    messagesToSend = [];
+
+    // For when the browser window reloads.
+    if (wasAlreadyReady) {
+      startRevisionListLoad();
+    }
   });
 
   ipcMain.on("loadRevisionData", (e, revisions: string[]) => {
