@@ -44,9 +44,9 @@ export function loadRevisionList(
         allLoaded: false,
       });
 
-      totalRevisionsSent += revisions.length;
+      totalRevisionsSent += revisionsToSend.length;
       lastSendTime = performance.now();
-      revisionsToSend.length = 0;
+      revisionsToSend = [];
     }
   });
 
@@ -59,6 +59,8 @@ export function loadRevisionList(
       revisions: revisionsToSend,
       allLoaded: true,
     });
+
+    totalRevisionsSent += revisionsToSend.length;
   });
 }
 
@@ -68,7 +70,7 @@ export function loadRevisionData(
 ): Promise<GitRevisionData> {
   return new Promise((resolve, reject) => {
     exec(
-      `git -C "${repoPath}" show --format=format:"%an%x00%ae%x00%aI%x00%B%x00" --name-status --no-abbrev ${revision}`,
+      `git -C "${repoPath}" show --format=format:"%an%x00%ae%x00%aI%x00%B%x00" --name-status -m --first-parent --no-abbrev ${revision}`,
       function (error, stdout, stderr) {
         try {
           const lines = stdout.split("\x00");
