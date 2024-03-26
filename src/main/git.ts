@@ -10,6 +10,64 @@ import { spawn, exec } from "node:child_process";
 
 const GitPath = "git";
 
+/** Tests if a given path is within a Git worktree. */
+export function isPathWithinGitRepository(path: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const revparse = spawn(GitPath, ["-C", path, "rev-parse"]);
+    revparse.on("close", (code) => {
+      resolve(code === 0);
+    });
+  });
+}
+
+/** Gets the path to the root repository .git folder. */
+export function getGitFolderPath(worktreePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    exec(
+      `${GitPath} rev-parse --path-format=absolute --git-common-dir`,
+      { cwd: worktreePath },
+      (error, stdout, stderr) => {
+        if (error || stderr) {
+          reject(error || stderr);
+        }
+        resolve(stdout.trim());
+      }
+    );
+  });
+}
+
+/** Gets the working copy root directory based on a given path. */
+export function getWorkingCopyRoot(path: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    exec(
+      `${GitPath} rev-parse --path-format=absolute --show-toplevel`,
+      { cwd: path },
+      (error, stdout, stderr) => {
+        if (error || stderr) {
+          reject(error || stderr);
+        }
+        resolve(stdout.trim());
+      }
+    );
+  });
+}
+
+/** Gets the name of the current checked out branch. */
+export function getCurrentBranch(worktreePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    exec(
+      `${GitPath} branch --show-current`,
+      { cwd: worktreePath },
+      (error, stdout, stderr) => {
+        if (error || stderr) {
+          reject(error || stderr);
+        }
+        resolve(stdout.trim());
+      }
+    );
+  });
+}
+
 export function loadRevisionList(
   repoPath: string,
   branch: string,

@@ -6,15 +6,17 @@ import { launchDiffTool, loadRevisionData, loadRevisionList } from "./git";
 
 let mainWindow: BrowserWindow;
 
-const repoPath = "/home/wnayes/code/TypeScript";
-const branch = "main";
-
-export function launchLogWindow() {
+export function launchLogWindow(
+  repoPath: string,
+  worktreePath: string,
+  filePath: string | null | undefined,
+  branch: string
+) {
   let ready = false;
   let messagesToSend: [string, ...args: any[]][] = [];
 
   function startRevisionListLoad() {
-    loadRevisionList(repoPath, branch, (args) => {
+    loadRevisionList(worktreePath, branch, (args) => {
       if (!ready) {
         messagesToSend.push(["revisions", args]);
       } else {
@@ -33,7 +35,7 @@ export function launchLogWindow() {
 
     mainWindow.webContents.send("repositoryInfo", {
       repository: repoPath,
-      worktree: repoPath,
+      worktree: worktreePath,
       branch,
     });
 
@@ -51,7 +53,7 @@ export function launchLogWindow() {
   ipcMain.on("loadRevisionData", (e, revisions: string[]) => {
     const datas: RevisionDataArgs["data"] = {};
     const promises = revisions.map((revision) =>
-      loadRevisionData(repoPath, revision).then((data) => {
+      loadRevisionData(worktreePath, revision).then((data) => {
         datas[revision] = data;
       })
     );
@@ -63,7 +65,7 @@ export function launchLogWindow() {
   });
 
   ipcMain.on("launchDiffTool", (e, revision: string, path: string) => {
-    launchDiffTool(repoPath, revision, path);
+    launchDiffTool(worktreePath, revision, path);
   });
 
   mainWindow = new BrowserWindow({
