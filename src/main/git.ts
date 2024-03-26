@@ -8,12 +8,14 @@ import {
 import { arrayAppend } from "../shared/arrays";
 import { spawn, exec } from "node:child_process";
 
+const GitPath = "git";
+
 export function loadRevisionList(
   repoPath: string,
   branch: string,
   onGotRevisions: (args: RevisionsArgs) => void
 ): void {
-  const revlist = spawn("git", [
+  const revlist = spawn(GitPath, [
     "-C",
     repoPath,
     "rev-list",
@@ -70,7 +72,7 @@ export function loadRevisionData(
 ): Promise<GitRevisionData> {
   return new Promise((resolve, reject) => {
     exec(
-      `git -C "${repoPath}" show --format=format:"%an%x00%ae%x00%aI%x00%B%x00" --name-status -m --first-parent --no-abbrev ${revision}`,
+      `${GitPath} -C "${repoPath}" show --format=format:"%an%x00%ae%x00%aI%x00%B%x00" --name-status -m --first-parent --no-abbrev ${revision}`,
       function (error, stdout, stderr) {
         try {
           const lines = stdout.split("\x00");
@@ -119,5 +121,29 @@ export function loadRevisionData(
         }
       }
     );
+  });
+}
+
+export function launchDiffTool(
+  repoPath: string,
+  revision: string,
+  path: string
+): void {
+  const difftool = spawn(GitPath, [
+    "-C",
+    repoPath,
+    "difftool",
+    "-g",
+    "-y",
+    `${revision}^`,
+    revision,
+    "--",
+    path,
+  ]);
+  difftool.stdout.on("data", (data) => {
+    console.log(data.toString());
+  });
+  difftool.stderr.on("data", (data) => {
+    console.error(data.toString());
   });
 }

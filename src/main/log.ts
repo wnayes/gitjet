@@ -1,8 +1,8 @@
 import { BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
-import { exec } from "node:child_process";
+import { exec, spawn } from "node:child_process";
 import { RevisionDataArgs } from "../shared/GitTypes";
-import { loadRevisionData, loadRevisionList } from "./git";
+import { launchDiffTool, loadRevisionData, loadRevisionList } from "./git";
 
 let mainWindow: BrowserWindow;
 
@@ -63,14 +63,7 @@ export function launchLogWindow() {
   });
 
   ipcMain.on("launchDiffTool", (e, revision: string, path: string) => {
-    exec(
-      `git -C "${repoPath}" difftool -g -y ${revision}^ ${revision} -- ${path}`,
-      (error, stdout, stderr) => {
-        if (error || stderr) {
-          console.error(error, stderr);
-        }
-      }
-    );
+    launchDiffTool(repoPath, revision, path);
   });
 
   mainWindow = new BrowserWindow({
