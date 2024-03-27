@@ -1,4 +1,9 @@
 import { useGitStore } from "../store";
+import {
+  getFileName,
+  removeGitFolderFromPath,
+  removeTrailingSlashes,
+} from "../../../shared/paths";
 
 interface IBreadcrumbProps {
   caption: string;
@@ -9,8 +14,9 @@ const Breadcrumb = ({ caption }: IBreadcrumbProps) => {
 };
 
 const RepositoryBreadcrumb = () => {
-  const repository =
+  let repository =
     useGitStore((state) => state.repository) || "(unset repository)";
+  repository = getFileName(removeGitFolderFromPath(repository));
   return <Breadcrumb caption={repository} />;
 };
 
@@ -18,23 +24,29 @@ const WorktreeBreadcrumb = () => {
   const repository = useGitStore((state) => state.repository);
   const worktree = useGitStore((state) => state.worktree);
 
-  if (!worktree || repository === worktree) {
+  if (!worktree || repoAndWorktreeMatch(repository, worktree)) {
     return null;
   }
 
-  return <Breadcrumb caption={worktree} />;
+  return <Breadcrumb caption={getFileName(worktree)} />;
 };
+
+function repoAndWorktreeMatch(repository: string, worktree: string): boolean {
+  return (
+    removeGitFolderFromPath(repository) === removeTrailingSlashes(worktree)
+  );
+}
 
 const BranchSelectBreadcrumb = () => {
   const branch = useGitStore((state) => state.branch) || "(unset branch)";
-  return <Breadcrumb caption={branch} />;
-};
-
-const StatsBreadcrumb = () => {
   const revisionCount = useGitStore((state) => state.revisions.length);
   const revisionsLoaded = useGitStore((state) => state.revisionsLoaded);
-  const caption = `${revisionCount}${revisionsLoaded ? "" : "+"}`;
-  return <Breadcrumb caption={caption} />;
+
+  return (
+    <Breadcrumb
+      caption={`${branch} (${revisionCount}${revisionsLoaded ? "" : "+"})`}
+    />
+  );
 };
 
 export const LogStateBreadcrumbs = () => {
@@ -43,7 +55,6 @@ export const LogStateBreadcrumbs = () => {
       <RepositoryBreadcrumb />
       <WorktreeBreadcrumb />
       <BranchSelectBreadcrumb />
-      <StatsBreadcrumb />
     </div>
   );
 };
