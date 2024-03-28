@@ -16,6 +16,7 @@ function useElectronCommunication(): void {
     (state) => state.setRevisionDataCount
   );
   const setRevisionData = useGitStore((state) => state.setRevisionData);
+  const setSearchResults = useGitStore((state) => state.setSearchResults);
 
   useLayoutEffect(() => {
     gitjet.onReceiveRepositoryInfo((args) => {
@@ -25,6 +26,7 @@ function useElectronCommunication(): void {
     });
     gitjet.onReceiveRevisionCount((args) => setRevisionCountData(args));
     gitjet.onReceiveRevisionData((args) => setRevisionData(args));
+    gitjet.onSearchResults((args) => setSearchResults(args));
     gitjet.ready();
   }, []);
 }

@@ -1,5 +1,5 @@
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { useGitStore } from "../store";
+import { useRevisionData } from "../store";
 import { FileChangesList } from "./FileChangesList";
 
 interface IRevisionDetailsProps {
@@ -7,9 +7,7 @@ interface IRevisionDetailsProps {
 }
 
 export const RevisionDetails = ({ revisionIndex }: IRevisionDetailsProps) => {
-  const revisionData = useGitStore(
-    (state) => state.revisionData[revisionIndex]
-  );
+  const revisionData = useRevisionData(revisionIndex);
   if (!revisionData) {
     return null;
   }

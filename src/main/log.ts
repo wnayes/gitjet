@@ -2,7 +2,7 @@ import { BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
 import { launchDiffTool } from "./git";
 import { LogDataCache } from "./LogDataCache";
-import { IPCChannels } from "../shared/ipc";
+import { IPCChannels, SearchResultData } from "../shared/ipc";
 import { RevisionCountArgs } from "../shared/GitTypes";
 
 let mainWindow: BrowserWindow;
@@ -51,6 +51,19 @@ export function launchLogWindow(
       });
     }
   );
+
+  ipcMain.on(IPCChannels.Search, (e, searchText: string) => {
+    logDataCache.search({
+      searchText,
+      onResult: (revisionMatch) => {
+        const resultPayload: SearchResultData = {
+          searchText,
+          revisionMatch,
+        };
+        mainWindow.webContents.send(IPCChannels.SearchResult, resultPayload);
+      },
+    });
+  });
 
   ipcMain.on(
     IPCChannels.LaunchDiffTool,

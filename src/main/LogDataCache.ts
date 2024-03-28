@@ -1,4 +1,4 @@
-import { GitRevisionData, RevisionCountArgs } from "../shared/GitTypes";
+import { GitRevisionData } from "../shared/GitTypes";
 import { GotRevisionsArgs, loadRevisionData, loadRevisionList } from "./git";
 
 export class LogDataCache {
@@ -9,6 +9,7 @@ export class LogDataCache {
     new Map();
   private _gotRevisionsCallbacks: Set<(args: GotRevisionsArgs) => void> =
     new Set();
+  private _searchStates: Map<string, SearchState> = new Map();
 
   public constructor(
     private worktreePath: string,
@@ -91,4 +92,73 @@ export class LogDataCache {
     }
     return Promise.all(dataLoadPromises);
   }
+
+  public async search(options: ISearchOptions): Promise<void> {
+    if (!this._revisions.length && this._revisionsLoadedPromise) {
+      await this._revisionsLoadedPromise;
+    }
+
+    const { searchText } = options;
+    let searchState = this._searchStates.get(searchText);
+    if (!searchState) {
+      searchState = {
+        currentIndex: 0,
+        matches: [],
+      };
+      this._searchStates.set(searchText, searchState);
+    } else if (searchState.matches.length > 0) {
+      options.onResult(searchState.matches);
+    }
+
+    for (let i = searchState.currentIndex; i < this._revisions.length; i++) {
+      searchState.currentIndex = i;
+
+      const data = await this.loadRevisionData(this._revisions[i]);
+      if (isSearchMatch(searchText, data)) {
+        searchState.matches.push(i);
+        options.onResult([i]);
+      }
+
+      // If we caught up to the revision load, wait for it now.
+      if (i === this._revisions.length - 1 && this._revisionsLoadedPromise) {
+        await this._revisionsLoadedPromise;
+      }
+    }
+  }
+}
+
+interface SearchState {
+  currentIndex: number;
+  matches: number[];
+}
+
+interface ISearchOptions {
+  searchText: string;
+  onResult(revisionMatch: number[]): void;
+}
+
+function isSearchMatch(searchText: string, data: GitRevisionData): boolean {
+  if (data.revision.includes(searchText)) {
+    return true;
+  }
+  if (data.subject?.includes(searchText) || data.body?.includes(searchText)) {
+    return true;
+  }
+  if (
+    data.author?.includes(searchText) ||
+    data.authorEmail?.includes(searchText)
+  ) {
+    return true;
+  }
+  if (data.changes) {
+    for (const change of data.changes) {
+      if (
+        change.path.includes(searchText) ||
+        change.newPath?.includes(searchText)
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
 }

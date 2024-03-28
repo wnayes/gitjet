@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { IPCChannels, type GitJetMain } from "../shared/ipc";
+import { IPCChannels, type GitJetMain, SearchResultData } from "../shared/ipc";
 import { RevisionDataArgs } from "../shared/GitTypes";
 
 const _revisionDataCallbacks: Set<(args: RevisionDataArgs) => void> = new Set();
@@ -43,6 +43,16 @@ const bridge: GitJetMain = {
 
   onReceiveRevisionData: (callback) => {
     _revisionDataCallbacks.add(callback);
+  },
+
+  search: (searchText: string) => {
+    ipcRenderer.send(IPCChannels.Search, searchText);
+  },
+
+  onSearchResults: (callback) => {
+    ipcRenderer.addListener(IPCChannels.SearchResult, (src, args) => {
+      callback(args);
+    });
   },
 };
 

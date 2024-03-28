@@ -1,5 +1,5 @@
 import { Ref, useCallback, useEffect, useRef } from "react";
-import { useGitStore } from "../store";
+import { useGitStore, waitForSearchResults } from "../store";
 import {
   FixedSizeList,
   FixedSizeList as List,
@@ -17,7 +17,9 @@ interface IDataListProps {
 
 export const DataList = ({ height, width }: IDataListProps) => {
   const revisionDatas = useGitStore((state) => state.revisionData);
-  const selectedDataIndex = useRef<number>(-1);
+
+  const searching = useGitStore((state) => state.searching);
+  const searchResults = useGitStore((state) => state.searchResults);
 
   const listRef = useRef<FixedSizeList<any> | null>(null);
   const listContainerElRef = useRef<HTMLDivElement>();
@@ -32,7 +34,6 @@ export const DataList = ({ height, width }: IDataListProps) => {
         if (rowElement) {
           const dataIndex = parseInt(rowElement.dataset.index!, 10);
           if (dataIndex >= 0) {
-            selectedDataIndex.current = dataIndex;
             setSelectedRevision(dataIndex);
           }
         }
@@ -42,8 +43,10 @@ export const DataList = ({ height, width }: IDataListProps) => {
   );
 
   const onListResize = useCallback(() => {
-    if (selectedDataIndex.current >= 0) {
-      listRef.current?.scrollToItem(selectedDataIndex.current);
+    // Avoiding component subscription to this value.
+    const selectedRevisionIndex = useGitStore.getState().selectedRevision;
+    if (selectedRevisionIndex >= 0) {
+      listRef.current?.scrollToItem(selectedRevisionIndex);
     }
   }, []);
 
@@ -60,30 +63,39 @@ export const DataList = ({ height, width }: IDataListProps) => {
 
   const isItemLoaded = useCallback(
     (index: number) => {
-      return !!revisionDatas[index];
+      return searching ? searchResults.length > index : !!revisionDatas[index];
     },
-    [revisionDatas]
+    [searching, revisionDatas]
   );
 
-  const loadMoreItems = useCallback((startIndex: number, stopIndex: number) => {
-    const count = stopIndex - startIndex + 1;
-    if (count > 0) {
-      return gitjet.loadRevisionData(startIndex, count);
-    }
-    return Promise.resolve();
-  }, []);
+  const loadMoreItems = useCallback(
+    (startIndex: number, stopIndex: number) => {
+      const count = stopIndex - startIndex + 1;
+      if (count > 0) {
+        if (searching) {
+          return waitForSearchResults(startIndex + count);
+        } else {
+          return gitjet.loadRevisionData(startIndex, count);
+        }
+      }
+      return Promise.resolve();
+    },
+    [searching]
+  );
+
+  const itemCount = searching ? searchResults.length + 1 : revisionDatas.length;
 
   return (
     <InfiniteLoader
       isItemLoaded={isItemLoaded}
-      itemCount={revisionDatas.length}
+      itemCount={itemCount}
       loadMoreItems={loadMoreItems}
     >
       {({ onItemsRendered, ref }) => (
         <ListWrapper
           height={height}
           width={width}
-          itemCount={revisionDatas.length}
+          itemCount={itemCount}
           listRef={listRef}
           refFromInfiniteLoader={ref}
           listContainerElRef={listContainerElRef}

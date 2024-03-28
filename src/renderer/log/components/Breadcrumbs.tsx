@@ -41,10 +41,15 @@ const BranchSelectBreadcrumb = () => {
   const branch = useGitStore((state) => state.branch) || "(unset branch)";
   const revisionCount = useGitStore((state) => state.revisionData.length);
   const revisionsLoaded = useGitStore((state) => state.revisionCountKnown);
+  const searching = useGitStore((state) => state.searching);
+  const searchResultCount = useGitStore((state) => state.searchResults.length);
+
+  const searchResultCountDisplay = searching ? `${searchResultCount} / ` : "";
+  const revisionTotalDisplay = `${revisionCount}${revisionsLoaded ? "" : "+"}`;
 
   return (
     <Breadcrumb
-      caption={`${branch} (${revisionCount}${revisionsLoaded ? "" : "+"})`}
+      caption={`${branch} (${searchResultCountDisplay}${revisionTotalDisplay})`}
     />
   );
 };

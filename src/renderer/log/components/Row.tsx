@@ -1,6 +1,6 @@
 import { memo, useMemo } from "react";
 import { ListChildComponentProps } from "react-window";
-import { useGitStore } from "../store";
+import { useGitStore, useRevisionData } from "../store";
 import { getColumnWidthStyle, useColumnWidths } from "../constants";
 import { GitRevisionData } from "../../../shared/GitTypes";
 
@@ -23,7 +23,7 @@ const DateDisplay = ({ gitDateIsoString }: { gitDateIsoString: string }) => {
 };
 
 export const Row = ({ index, style }: ListChildComponentProps) => {
-  const revisionData = useGitStore((state) => state.revisionData[index]);
+  const revisionData = useRevisionData(index);
   const selected = useGitStore((state) => index === state.selectedRevision);
 
   let rowClasses = "dataRow";
@@ -48,6 +48,7 @@ const RowInternal = memo(({ revisionData }: IRowInternalProps) => {
     <>
       <div className="dataCell" style={getColumnWidthStyle(colWidths[0])}>
         {revisionData?.revision && <CommitHash hash={revisionData?.revision} />}
+        {!revisionData && "Loading..."}
       </div>
       <div
         className="dataCell"

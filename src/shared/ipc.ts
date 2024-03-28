@@ -7,6 +7,8 @@ export interface GitJetMain {
   onReceiveRevisionCount(callback: (args: RevisionCountArgs) => void): void;
   onReceiveRevisionData(callback: (args: RevisionDataArgs) => void): void;
   loadRevisionData(startIndex: number, count: number): Promise<void>;
+  search(searchText: string): void;
+  onSearchResults(callback: (results: SearchResultData) => void): void;
 }
 
 export interface RepositoryInfoArgs {
@@ -22,4 +24,11 @@ export enum IPCChannels {
   Revisions = "revisions",
   RevisionData = "revisionData",
   LaunchDiffTool = "launchDiffTool",
+  Search = "search",
+  SearchResult = "searchResult",
+}
+
+export interface SearchResultData {
+  searchText: string;
+  revisionMatch: number[];
 }
