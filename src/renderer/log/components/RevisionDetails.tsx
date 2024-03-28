@@ -3,11 +3,13 @@ import { useGitStore } from "../store";
 import { FileChangesList } from "./FileChangesList";
 
 interface IRevisionDetailsProps {
-  revision: string;
+  revisionIndex: number;
 }
 
-export const RevisionDetails = ({ revision }: IRevisionDetailsProps) => {
-  const revisionData = useGitStore((state) => state.revisionData[revision]);
+export const RevisionDetails = ({ revisionIndex }: IRevisionDetailsProps) => {
+  const revisionData = useGitStore(
+    (state) => state.revisionData[revisionIndex]
+  );
   if (!revisionData) {
     return null;
   }
@@ -24,7 +26,7 @@ export const RevisionDetails = ({ revision }: IRevisionDetailsProps) => {
         </Panel>
         <PanelResizeHandle className="panelResizer" style={{ height: 2 }} />
         <Panel minSize={5}>
-          <FileChangesList revision={revision} revisionData={revisionData} />
+          <FileChangesList revisionData={revisionData} />
         </Panel>
       </PanelGroup>
     </>

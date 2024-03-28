@@ -12,7 +12,9 @@ function useElectronCommunication(): void {
   const setRepository = useGitStore((state) => state.setRepository);
   const setWorktree = useGitStore((state) => state.setWorktree);
   const setBranch = useGitStore((state) => state.setBranch);
-  const setRevisions = useGitStore((state) => state.setRevisions);
+  const setRevisionCountData = useGitStore(
+    (state) => state.setRevisionDataCount
+  );
   const setRevisionData = useGitStore((state) => state.setRevisionData);
 
   useLayoutEffect(() => {
@@ -21,7 +23,7 @@ function useElectronCommunication(): void {
       setWorktree(args.worktree);
       setBranch(args.branch);
     });
-    gitjet.onReceiveRevisions((args) => setRevisions(args));
+    gitjet.onReceiveRevisionCount((args) => setRevisionCountData(args));
     gitjet.onReceiveRevisionData((args) => setRevisionData(args));
     gitjet.ready();
   }, []);
@@ -47,11 +49,11 @@ export const App = () => {
             </AutoSizer>
           </div>
         </Panel>
-        {!!selectedRevision && (
+        {selectedRevision >= 0 && (
           <>
             <PanelResizeHandle className="panelResizer" style={{ height: 4 }} />
             <Panel maxSize={75}>
-              <RevisionDetails revision={selectedRevision} />
+              <RevisionDetails revisionIndex={selectedRevision} />
             </Panel>
           </>
         )}

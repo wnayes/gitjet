@@ -1,8 +1,9 @@
 import { BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
-import { exec, spawn } from "node:child_process";
-import { RevisionDataArgs } from "../shared/GitTypes";
-import { launchDiffTool, loadRevisionData, loadRevisionList } from "./git";
+import { launchDiffTool } from "./git";
+import { LogDataCache } from "./LogDataCache";
+import { IPCChannels } from "../shared/ipc";
+import { RevisionCountArgs } from "../shared/GitTypes";
 
 let mainWindow: BrowserWindow;
 
@@ -13,68 +14,56 @@ export function launchLogWindow(
   branch: string
 ) {
   let ready = false;
-  let messagesToSend: [string, ...args: any[]][] = [];
+  const logDataCache = new LogDataCache(worktreePath, filePath, branch);
 
-  function startRevisionListLoad() {
-    loadRevisionList(worktreePath, branch, (args) => {
-      if (!ready) {
-        messagesToSend.push(["revisions", args]);
-      } else {
-        mainWindow.webContents.send("revisions", args);
-      }
-    });
-  }
-
-  // Start the revision list load immediately, and send any data once the
-  // browser window renders.
-  startRevisionListLoad();
-
-  ipcMain.on("ready", () => {
-    const wasAlreadyReady = ready;
+  ipcMain.on(IPCChannels.Ready, () => {
     ready = true;
 
-    mainWindow.webContents.send("repositoryInfo", {
+    mainWindow.webContents.send(IPCChannels.RepositoryInfo, {
       repository: repoPath,
       worktree: worktreePath,
       branch,
     });
 
-    for (const messageToSend of messagesToSend) {
-      mainWindow.webContents.send(...messageToSend);
-    }
-    messagesToSend = [];
-
-    // For when the browser window reloads.
-    if (wasAlreadyReady) {
-      startRevisionListLoad();
-    }
-  });
-
-  ipcMain.on("loadRevisionData", (e, revisions: string[]) => {
-    const datas: RevisionDataArgs["data"] = {};
-    const promises = revisions.map((revision) =>
-      loadRevisionData(worktreePath, revision).then((data) => {
-        datas[revision] = data;
-      })
-    );
-    Promise.all(promises).then(() => {
-      mainWindow.webContents.send("revisionData", {
-        data: datas,
+    const revisionsAllLoaded = logDataCache.revisionsFullyLoaded();
+    mainWindow.webContents.send(IPCChannels.Revisions, {
+      revisionCount: logDataCache.getRevisionCount(),
+      allLoaded: revisionsAllLoaded,
+    } as RevisionCountArgs);
+    if (!revisionsAllLoaded) {
+      logDataCache.onGotRevisions((args) => {
+        mainWindow.webContents.send(IPCChannels.Revisions, {
+          revisionCount: logDataCache.getRevisionCount(),
+          allLoaded: args.allLoaded,
+        } as RevisionCountArgs);
       });
-    });
+    }
   });
 
-  ipcMain.on("launchDiffTool", (e, revision: string, path: string) => {
-    launchDiffTool(worktreePath, revision, path);
-  });
+  ipcMain.on(
+    IPCChannels.LoadRevisionData,
+    (e, startIndex: number, count: number) => {
+      logDataCache.loadRevisionDataRange(startIndex, count).then((datas) => {
+        mainWindow.webContents.send(IPCChannels.RevisionData, {
+          startIndex,
+          data: datas,
+        });
+      });
+    }
+  );
+
+  ipcMain.on(
+    IPCChannels.LaunchDiffTool,
+    (e, revision: string, path: string) => {
+      launchDiffTool(worktreePath, revision, path);
+    }
+  );
 
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
-      preload: path.resolve(
-        path.join(__dirname, "..", "preload", "preload.js")
-      ),
+      preload: path.resolve(path.join(__dirname, "..", "preload", "dist.js")),
     },
   });
 

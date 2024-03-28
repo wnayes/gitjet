@@ -1,14 +1,13 @@
 :root {
     --secondary-color: rgb(197, 197, 197);
-    --resizer-color: rgb(161, 161, 161);
+    --resizer-color: rgb(193, 193, 193);
+    --resizer-hover-color: rgb(161, 161, 161);
     --row-hover-bg-color: rgb(209, 209, 209);
     --row-selected-bg-color: rgb(167, 214, 223);
     --row-body-text-color: rgb(83, 83, 83);
-
-    --add-color: 
 }
 
-html, body {
+html, body, #root {
     height: 100%;
     width: 100%;
     margin: 0;
@@ -98,6 +97,9 @@ html, body {
 
 .panelResizer {
     background-color: var(--resizer-color);
+}
+.panelResizer:hover {
+    background-color: var(--resizer-hover-color);
 }
 
 .revisionDataContainer {

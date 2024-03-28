@@ -39,8 +39,8 @@ function repoAndWorktreeMatch(repository: string, worktree: string): boolean {
 
 const BranchSelectBreadcrumb = () => {
   const branch = useGitStore((state) => state.branch) || "(unset branch)";
-  const revisionCount = useGitStore((state) => state.revisions.length);
-  const revisionsLoaded = useGitStore((state) => state.revisionsLoaded);
+  const revisionCount = useGitStore((state) => state.revisionData.length);
+  const revisionsLoaded = useGitStore((state) => state.revisionCountKnown);
 
   return (
     <Breadcrumb

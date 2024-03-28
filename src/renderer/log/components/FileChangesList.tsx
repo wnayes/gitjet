@@ -62,14 +62,10 @@ const FileChangeRow = ({
 };
 
 interface IFileChangesListProps {
-  revision: string;
   revisionData: GitRevisionData;
 }
 
-export const FileChangesList = ({
-  revision,
-  revisionData,
-}: IFileChangesListProps) => {
+export const FileChangesList = ({ revisionData }: IFileChangesListProps) => {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
   const onRowClick = useCallback((change: GitFileChange) => {
@@ -78,9 +74,9 @@ export const FileChangesList = ({
 
   const onRowDoubleClick = useCallback(
     (change: GitFileChange) => {
-      gitjet.launchDiffTool(revision, change.path);
+      gitjet.launchDiffTool(revisionData.revision, change.path);
     },
-    [revision]
+    [revisionData]
   );
 
   return (

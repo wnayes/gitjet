@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { Ref, useCallback, useEffect, useRef } from "react";
 import { useGitStore } from "../store";
 import {
   FixedSizeList,
@@ -6,22 +6,9 @@ import {
   ListOnItemsRenderedProps,
 } from "react-window";
 import { Row } from "./Row";
+import InfiniteLoader from "react-window-infinite-loader";
 import { useResizeHandler } from "../../hooks/useResizeHandler";
-
-function tryLoadRevisionData(
-  startIndex: number,
-  endIndex: number,
-  loadedRevisions: Set<string>
-): void {
-  const state = useGitStore.getState();
-  const revisionsToLoad = state.revisions
-    .slice(startIndex, endIndex)
-    .filter((revision) => !loadedRevisions.has(revision));
-  if (revisionsToLoad.length > 0) {
-    revisionsToLoad.forEach((revision) => loadedRevisions.add(revision));
-    gitjet.loadRevisionData(revisionsToLoad);
-  }
-}
+import { useCombinedRef } from "../../hooks/useCombinedRef";
 
 interface IDataListProps {
   height: number;
@@ -29,26 +16,8 @@ interface IDataListProps {
 }
 
 export const DataList = ({ height, width }: IDataListProps) => {
-  const revisions = useGitStore((state) => state.revisions);
+  const revisionDatas = useGitStore((state) => state.revisionData);
   const selectedDataIndex = useRef<number>(-1);
-
-  const loadedRevisions = useRef<Set<string>>();
-  if (!loadedRevisions.current) {
-    loadedRevisions.current = new Set();
-  }
-
-  const onItemsRendered = useCallback((props: ListOnItemsRenderedProps) => {
-    tryLoadRevisionData(
-      props.visibleStartIndex,
-      props.visibleStopIndex,
-      loadedRevisions.current!
-    );
-    tryLoadRevisionData(
-      props.overscanStartIndex,
-      props.overscanStopIndex,
-      loadedRevisions.current!
-    );
-  }, []);
 
   const listRef = useRef<FixedSizeList<any> | null>(null);
   const listContainerElRef = useRef<HTMLDivElement>();
@@ -64,12 +33,12 @@ export const DataList = ({ height, width }: IDataListProps) => {
           const dataIndex = parseInt(rowElement.dataset.index!, 10);
           if (dataIndex >= 0) {
             selectedDataIndex.current = dataIndex;
-            setSelectedRevision(revisions[dataIndex]);
+            setSelectedRevision(dataIndex);
           }
         }
       }
     },
-    [setSelectedRevision, revisions]
+    [setSelectedRevision]
   );
 
   const onListResize = useCallback(() => {
@@ -89,19 +58,68 @@ export const DataList = ({ height, width }: IDataListProps) => {
     }
   });
 
+  const isItemLoaded = useCallback(
+    (index: number) => {
+      return !!revisionDatas[index];
+    },
+    [revisionDatas]
+  );
+
+  const loadMoreItems = useCallback((startIndex: number, stopIndex: number) => {
+    const count = stopIndex - startIndex + 1;
+    if (count > 0) {
+      return gitjet.loadRevisionData(startIndex, count);
+    }
+    return Promise.resolve();
+  }, []);
+
+  return (
+    <InfiniteLoader
+      isItemLoaded={isItemLoaded}
+      itemCount={revisionDatas.length}
+      loadMoreItems={loadMoreItems}
+    >
+      {({ onItemsRendered, ref }) => (
+        <ListWrapper
+          height={height}
+          width={width}
+          itemCount={revisionDatas.length}
+          listRef={listRef}
+          refFromInfiniteLoader={ref}
+          listContainerElRef={listContainerElRef}
+          onItemsRendered={onItemsRendered}
+        />
+      )}
+    </InfiniteLoader>
+  );
+};
+
+interface IListWrapperProps {
+  height: number;
+  width: number;
+  itemCount: number;
+  listContainerElRef: Ref<any>;
+  listRef: Ref<any>;
+  refFromInfiniteLoader: Ref<any>;
+  onItemsRendered: (props: ListOnItemsRenderedProps) => any;
+}
+
+function ListWrapper(props: IListWrapperProps) {
+  const combinedRef = useCombinedRef(
+    props.listRef,
+    props.refFromInfiniteLoader
+  );
   return (
     <List
-      height={height}
-      itemCount={revisions.length}
+      height={props.height}
+      itemCount={props.itemCount}
       itemSize={22}
-      width={width}
-      onItemsRendered={onItemsRendered}
-      itemKey={(i) => revisions[i]}
-      overscanCount={10}
-      ref={listRef}
-      outerRef={listContainerElRef}
+      width={props.width}
+      onItemsRendered={props.onItemsRendered}
+      ref={combinedRef}
+      outerRef={props.listContainerElRef}
     >
       {Row}
     </List>
   );
-};
+}

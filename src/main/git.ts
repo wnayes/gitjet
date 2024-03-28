@@ -2,7 +2,6 @@ import {
   GitFileChange,
   GitFileChangeType,
   GitRevisionData,
-  RevisionsArgs,
   gitFileChangeTypeStringToEnum,
 } from "../shared/GitTypes";
 import { arrayAppend } from "../shared/arrays";
@@ -68,14 +67,19 @@ export function getCurrentBranch(worktreePath: string): Promise<string> {
   });
 }
 
+export interface GotRevisionsArgs {
+  revisions: string[];
+  allLoaded: boolean;
+}
+
 export function loadRevisionList(
-  repoPath: string,
+  worktreePath: string,
   branch: string,
-  onGotRevisions: (args: RevisionsArgs) => void
+  onGotRevisions: (args: GotRevisionsArgs) => void
 ): void {
   const revlist = spawn(GitPath, [
     "-C",
-    repoPath,
+    worktreePath,
     "rev-list",
     "--first-parent",
     branch,
@@ -135,6 +139,7 @@ export function loadRevisionData(
         try {
           const lines = stdout.split("\x00");
           const data: GitRevisionData = {
+            revision,
             author: lines[0],
             authorEmail: lines[1],
             authorDate: lines[2],

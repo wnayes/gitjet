@@ -2,52 +2,52 @@ import { create } from "zustand";
 import {
   GitRevisionData,
   RevisionDataArgs,
-  RevisionsArgs,
+  RevisionCountArgs,
 } from "../../shared/GitTypes";
 
 export interface GitState {
   repository: string;
   worktree: string;
   branch: string;
-  revisions: string[];
-  revisionsLoaded: boolean;
-  revisionData: { [revision: string]: GitRevisionData | null | undefined };
-  selectedRevision?: string;
+  revisionCountKnown: boolean;
+  revisionData: (GitRevisionData | null | undefined)[];
+  selectedRevision: number;
   setRepository(repository: string): void;
   setWorktree(worktree: string): void;
   setBranch(branch: string): void;
-  setRevisions(args: RevisionsArgs): void;
+  setRevisionDataCount(args: RevisionCountArgs): void;
   setRevisionData(args: RevisionDataArgs): void;
-  setSelectedRevision(revision: string | undefined): void;
+  setSelectedRevision(revisionIndex: number): void;
 }
 
 export const useGitStore = create<GitState>((set) => ({
   repository: "",
   worktree: "",
   branch: "",
-  revisions: [],
-  revisionsLoaded: false,
-  revisionData: {},
+  revisionCountKnown: false,
+  revisionData: [],
+  selectedRevision: -1,
 
   setRepository: (repository: string) => set(() => ({ repository })),
   setWorktree: (worktree: string) => set(() => ({ worktree })),
   setBranch: (branch: string) => set(() => ({ branch })),
-  setRevisions: (args: RevisionsArgs) => {
+  setRevisionDataCount: (args: RevisionCountArgs) => {
     return set((state) => {
-      let revisions = state.revisions;
-      if (args.revisions.length > 0) {
-        revisions = [...state.revisions, ...args.revisions];
-      }
-      return { revisions, revisionsLoaded: args.allLoaded };
+      let revisionData = [...state.revisionData];
+      revisionData.length = args.revisionCount;
+      return { revisionData, revisionCountKnown: args.allLoaded };
     });
   },
   setRevisionData: (args: RevisionDataArgs) => {
     return set((state) => {
-      let { data } = args;
-      const revisionData = { ...state.revisionData, ...data };
+      let { startIndex, data } = args;
+      const revisionData = [...state.revisionData];
+      for (let i = 0; i < data.length; i++) {
+        revisionData[startIndex + i] = data[i];
+      }
       return { revisionData };
     });
   },
-  setSelectedRevision: (revision: string | undefined) =>
-    set(() => ({ selectedRevision: revision })),
+  setSelectedRevision: (revisionIndex: number) =>
+    set(() => ({ selectedRevision: revisionIndex })),
 }));

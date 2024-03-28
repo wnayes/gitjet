@@ -1,13 +1,15 @@
-export interface RevisionsArgs {
-  revisions: string[];
+export interface RevisionCountArgs {
+  revisionCount: number;
   allLoaded: boolean;
 }
 
 export interface RevisionDataArgs {
-  data: { [revision: string]: GitRevisionData };
+  startIndex: number;
+  data: GitRevisionData[];
 }
 
 export interface GitRevisionData {
+  revision: string;
   author: string | null;
   authorEmail: string | null;
   authorDate: string | null;

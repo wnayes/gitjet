@@ -23,9 +23,8 @@ const DateDisplay = ({ gitDateIsoString }: { gitDateIsoString: string }) => {
 };
 
 export const Row = ({ index, style }: ListChildComponentProps) => {
-  const revision = useGitStore((state) => state.revisions[index]);
-  const revisionData = useGitStore((state) => state.revisionData[revision]);
-  const selected = useGitStore((state) => revision === state.selectedRevision);
+  const revisionData = useGitStore((state) => state.revisionData[index]);
+  const selected = useGitStore((state) => index === state.selectedRevision);
 
   let rowClasses = "dataRow";
   if (selected) {
@@ -34,22 +33,21 @@ export const Row = ({ index, style }: ListChildComponentProps) => {
 
   return (
     <div className={rowClasses} style={style} data-index={index}>
-      <RowInternal revision={revision} revisionData={revisionData} />
+      <RowInternal revisionData={revisionData} />
     </div>
   );
 };
 
 interface IRowInternalProps {
-  revision: string;
   revisionData: GitRevisionData | null | undefined;
 }
 
-const RowInternal = memo(({ revision, revisionData }: IRowInternalProps) => {
+const RowInternal = memo(({ revisionData }: IRowInternalProps) => {
   const colWidths = useColumnWidths();
   return (
     <>
       <div className="dataCell" style={getColumnWidthStyle(colWidths[0])}>
-        <CommitHash hash={revision} />
+        {revisionData?.revision && <CommitHash hash={revisionData?.revision} />}
       </div>
       <div
         className="dataCell"
