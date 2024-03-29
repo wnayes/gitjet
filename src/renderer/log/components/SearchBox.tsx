@@ -3,7 +3,7 @@ import { useGitStore } from "../store";
 
 export function SearchBox() {
   const searchText = useGitStore((state) => state.searchText);
-  const searching = useGitStore((state) => state.searchText);
+  const searching = useGitStore((state) => state.searching);
   const setSearchText = useGitStore((state) => state.setSearchText);
   const setSearching = useGitStore((state) => state.setSearching);
 
