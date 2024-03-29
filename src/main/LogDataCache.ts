@@ -114,6 +114,10 @@ export class LogDataCache {
     for (let i = searchState.currentIndex; i < this._revisions.length; i++) {
       searchState.currentIndex = i;
 
+      if (i % 20 === 0) {
+        this.loadRevisionDataRange(i, 20);
+      }
+
       const data = await this.loadRevisionData(this._revisions[i]);
       if (isSearchMatch(searchText, data)) {
         searchState.matches.push(i);
