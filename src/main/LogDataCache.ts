@@ -120,11 +120,17 @@ export class LogDataCache {
         options.onResult([i]);
       }
 
+      if (i % 100 === 0) {
+        options.onProgress?.(i);
+      }
+
       // If we caught up to the revision load, wait for it now.
       if (i === this._revisions.length - 1 && this._revisionsLoadedPromise) {
         await this._revisionsLoadedPromise;
       }
     }
+
+    options.onProgress?.(this._revisions.length);
   }
 }
 
@@ -136,6 +142,7 @@ interface SearchState {
 interface ISearchOptions {
   searchText: string;
   onResult(revisionMatch: number[]): void;
+  onProgress?(currentRevision: number): void;
 }
 
 function isSearchMatch(searchText: string, data: GitRevisionData): boolean {

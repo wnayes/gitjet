@@ -4,7 +4,7 @@ import {
   RevisionDataArgs,
   RevisionCountArgs,
 } from "../../shared/GitTypes";
-import { SearchResultData } from "../../shared/ipc";
+import { SearchProgressData, SearchResultData } from "../../shared/ipc";
 
 export interface GitState {
   repository: string;
@@ -16,6 +16,7 @@ export interface GitState {
   searchText: string;
   searching: boolean;
   searchResults: number[];
+  searchCurrentRevisionIndex: number;
   setRepository(repository: string): void;
   setWorktree(worktree: string): void;
   setBranch(branch: string): void;
@@ -25,6 +26,7 @@ export interface GitState {
   setSearchText(searchText: string): void;
   setSearching(searching: boolean): void;
   setSearchResults(results: SearchResultData): void;
+  setSearchProgress(progress: SearchProgressData): void;
 }
 
 export const useGitStore = create<GitState>((set) => ({
@@ -40,6 +42,7 @@ export const useGitStore = create<GitState>((set) => ({
   searchText: "",
   searching: false,
   searchResults: [],
+  searchCurrentRevisionIndex: -1,
 
   setRepository: (repository) => set(() => ({ repository })),
   setWorktree: (worktree) => set(() => ({ worktree })),
@@ -68,7 +71,12 @@ export const useGitStore = create<GitState>((set) => ({
 
   setSearchText: (searchText) => set(() => ({ searchText })),
   setSearching: (searching) =>
-    set(() => ({ searching, searchResults: [], selectedRevision: -1 })),
+    set(() => ({
+      searching,
+      searchResults: [],
+      selectedRevision: -1,
+      searchCurrentRevisionIndex: -1,
+    })),
   setSearchResults: (results) =>
     set((state) => {
       if (state.searchText !== results.searchText) {
@@ -77,6 +85,16 @@ export const useGitStore = create<GitState>((set) => ({
 
       return {
         searchResults: [...state.searchResults, ...results.revisionMatch],
+      };
+    }),
+  setSearchProgress: (progress) =>
+    set((state) => {
+      if (state.searchText !== progress.searchText) {
+        return {}; // Some lingering IPC from an out of date search?
+      }
+
+      return {
+        searchCurrentRevisionIndex: progress.currentRevision,
       };
     }),
 }));

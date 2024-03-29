@@ -9,6 +9,7 @@ export interface GitJetMain {
   loadRevisionData(startIndex: number, count: number): Promise<void>;
   search(searchText: string): void;
   onSearchResults(callback: (results: SearchResultData) => void): void;
+  onSearchProgress(callback: (progress: SearchProgressData) => void): void;
 }
 
 export interface RepositoryInfoArgs {
@@ -25,10 +26,16 @@ export enum IPCChannels {
   RevisionData = "revisionData",
   LaunchDiffTool = "launchDiffTool",
   Search = "search",
+  SearchProgress = "searchProgress",
   SearchResult = "searchResult",
 }
 
 export interface SearchResultData {
   searchText: string;
   revisionMatch: number[];
+}
+
+export interface SearchProgressData {
+  searchText: string;
+  currentRevision: number;
 }

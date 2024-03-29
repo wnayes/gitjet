@@ -5,6 +5,7 @@
     --row-hover-bg-color: rgb(209, 209, 209);
     --row-selected-bg-color: rgb(167, 214, 223);
     --row-body-text-color: rgb(83, 83, 83);
+    --search-progress-text-color: rgb(80, 80, 80);
 }
 
 html, body, #root {
@@ -38,11 +39,28 @@ html, body, #root {
     content: "→"
 }
 
-.searchInput {
+.searchBox {
     height: 30px;
     width: calc(100% - 8px);
     box-sizing: border-box;
     margin: 0 4px;
+    display: flex;
+    align-items: center;
+}
+
+.searchInput {
+    height: 100%;
+    width: 100%;
+}
+
+.searchExtras {
+    flex-shrink: 0;
+}
+
+.searchProgressText {
+    color: var(--search-progress-text-color);
+    font-size: 14px;
+    padding-left: 0.25em;
 }
 
 .headers {

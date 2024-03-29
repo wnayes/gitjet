@@ -54,6 +54,12 @@ const bridge: GitJetMain = {
       callback(args);
     });
   },
+
+  onSearchProgress: (callback) => {
+    ipcRenderer.addListener(IPCChannels.SearchProgress, (src, args) => {
+      callback(args);
+    });
+  },
 };
 
 contextBridge.exposeInMainWorld("gitjet", bridge);
