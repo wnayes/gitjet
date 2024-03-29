@@ -80,10 +80,11 @@ export class LogDataCache {
     count: number
   ): Promise<GitRevisionData[]> {
     if (startIndex + count >= this._revisions.length) {
-      if (!this._revisionsLoadedPromise) {
-        throw new Error("Unexpected state");
+      // If we don't have the promise, that means the list is actually loaded,
+      // and shorter than what the client is asking for.
+      if (this._revisionsLoadedPromise) {
+        await this._revisionsLoadedPromise;
       }
-      await this._revisionsLoadedPromise;
     }
 
     const dataLoadPromises = [];
