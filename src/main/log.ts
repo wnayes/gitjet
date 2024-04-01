@@ -1,6 +1,6 @@
 import { BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
-import { launchDiffTool } from "./git";
+import { getNullObjectHash, launchDiffTool } from "./git";
 import { LogDataCache } from "./LogDataCache";
 import {
   IPCChannels,
@@ -81,8 +81,17 @@ export function launchLogWindow(
 
   ipcMain.on(
     IPCChannels.LaunchDiffTool,
-    (e, revision: string, path: string) => {
-      launchDiffTool(worktreePath, revision, path);
+    async (e, revision: string, path: string) => {
+      if (
+        logDataCache.getRevisionAtIndex(logDataCache.getRevisionCount() - 1) ===
+        revision
+      ) {
+        // We need to use special arguments for the very first revision diff.
+        const nullHash = await getNullObjectHash(worktreePath);
+        launchDiffTool(worktreePath, nullHash, revision, path);
+      } else {
+        launchDiffTool(worktreePath, null, revision, path);
+      }
     }
   );
 

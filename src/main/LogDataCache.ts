@@ -41,6 +41,10 @@ export class LogDataCache {
     });
   }
 
+  public getRevisionAtIndex(index: number): string | null {
+    return this._revisions[index] ?? null;
+  }
+
   public getRevisionCount(): number {
     return this._revisions.length;
   }

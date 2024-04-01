@@ -67,6 +67,22 @@ export function getCurrentBranch(worktreePath: string): Promise<string> {
   });
 }
 
+/** Gets the hash representing the start of the repository history. */
+export function getNullObjectHash(worktreePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    exec(
+      `${GitPath} hash-object -t tree /dev/null`,
+      { cwd: worktreePath },
+      (error, stdout, stderr) => {
+        if (error || stderr) {
+          reject(error || stderr);
+        }
+        resolve(stdout.trim());
+      }
+    );
+  });
+}
+
 export interface GotRevisionsArgs {
   revisions: string[];
   allLoaded: boolean;
@@ -189,7 +205,8 @@ export function loadRevisionData(
 
 export function launchDiffTool(
   repoPath: string,
-  revision: string,
+  fromRevision: string | null,
+  toRevision: string,
   path: string
 ): void {
   const difftool = spawn(GitPath, [
@@ -198,8 +215,8 @@ export function launchDiffTool(
     "difftool",
     "-g",
     "-y",
-    `${revision}^`,
-    revision,
+    fromRevision ?? `${toRevision}^`,
+    toRevision,
     "--",
     path,
   ]);
