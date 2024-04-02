@@ -63,6 +63,24 @@ export class LogDataCache {
     this._gotRevisionsCallbacks.add(callback);
   }
 
+  /** Waits until at least `count` revisions have loaded, or revision load completes. */
+  public async waitForEnoughRevisions(count: number): Promise<void> {
+    let finished = false;
+    return new Promise<void>((resolve) => {
+      const onGotRevisionsCallback = (args: GotRevisionsArgs) => {
+        if (finished) {
+          return;
+        }
+        if (args.allLoaded || count < this._revisions.length) {
+          finished = true;
+          this._gotRevisionsCallbacks.delete(onGotRevisionsCallback);
+          resolve();
+        }
+      };
+      this.onGotRevisions(onGotRevisionsCallback);
+    });
+  }
+
   public loadRevisionData(revision: string): Promise<GitRevisionData> {
     const data = this._revisionData.get(revision);
     if (data) {
@@ -93,7 +111,7 @@ export class LogDataCache {
       // If we don't have the promise, that means the list is actually loaded,
       // and shorter than what the client is asking for.
       if (this._revisionsLoadedPromise) {
-        await this._revisionsLoadedPromise;
+        await this.waitForEnoughRevisions(startIndex + count);
       }
     }
 
