@@ -1,5 +1,6 @@
 import { GitRevisionData } from "../shared/GitTypes";
 import { GotRevisionsArgs, loadRevisionData, loadRevisionList } from "./git";
+import { cpus } from "node:os";
 
 export class LogDataCache {
   private _revisions: string[] = [];
@@ -115,12 +116,10 @@ export class LogDataCache {
       options.onResult(searchState.matches);
     }
 
+    this._revisionLoadLoop(searchState.currentIndex);
+
     for (let i = searchState.currentIndex; i < this._revisions.length; i++) {
       searchState.currentIndex = i;
-
-      if (i % 20 === 0) {
-        this.loadRevisionDataRange(i, 20);
-      }
 
       const data = await this.loadRevisionData(this._revisions[i]);
       if (isSearchMatch(searchText, data)) {
@@ -139,6 +138,30 @@ export class LogDataCache {
     }
 
     options.onProgress?.(this._revisions.length);
+  }
+
+  private _revisionLoadLoop(startIndex: number): void {
+    const ConcurrentCount = cpus().length;
+    let numInFlight = 0;
+    let curIndex = startIndex;
+    const _this = this;
+
+    function onNext() {
+      numInFlight--;
+      startMore();
+    }
+
+    function startMore() {
+      while (
+        numInFlight < ConcurrentCount &&
+        curIndex < _this._revisions.length
+      ) {
+        numInFlight++;
+        _this.loadRevisionData(_this._revisions[curIndex++]).then(onNext);
+      }
+    }
+
+    startMore();
   }
 }
 
