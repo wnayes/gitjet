@@ -1,6 +1,7 @@
 import { useGitStore } from "../store";
 import {
   getFileName,
+  normalizePath,
   removeGitFolderFromPath,
   removeTrailingSlashes,
 } from "../../../shared/paths";
@@ -43,7 +44,8 @@ const FilePathBreadcrumb = () => {
 
 function repoAndWorktreeMatch(repository: string, worktree: string): boolean {
   return (
-    removeGitFolderFromPath(repository) === removeTrailingSlashes(worktree)
+    normalizePath(removeGitFolderFromPath(repository)) ===
+    normalizePath(removeTrailingSlashes(worktree))
   );
 }
 
