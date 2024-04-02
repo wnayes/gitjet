@@ -31,6 +31,16 @@ const WorktreeBreadcrumb = () => {
   return <Breadcrumb caption={getFileName(worktree)} />;
 };
 
+const FilePathBreadcrumb = () => {
+  const filePath = useGitStore((state) => state.filePath);
+  if (!filePath) {
+    return null;
+  }
+  const fileName = getFileName(filePath);
+
+  return <Breadcrumb caption={fileName} />;
+};
+
 function repoAndWorktreeMatch(repository: string, worktree: string): boolean {
   return (
     removeGitFolderFromPath(repository) === removeTrailingSlashes(worktree)
@@ -59,6 +69,7 @@ export const LogStateBreadcrumbs = () => {
     <div className="breadcrumbs">
       <RepositoryBreadcrumb />
       <WorktreeBreadcrumb />
+      <FilePathBreadcrumb />
       <BranchSelectBreadcrumb />
     </div>
   );

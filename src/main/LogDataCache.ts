@@ -18,27 +18,32 @@ export class LogDataCache {
     private branch: string
   ) {
     this._revisionsLoadedPromise = new Promise((resolve) => {
-      loadRevisionList(this.worktreePath, this.branch, (args) => {
-        this._revisions = this._revisions.concat(args.revisions);
-        this._gotRevisionsCallbacks.forEach((callback) => callback(args));
-        if (args.allLoaded) {
-          this._revisionsLoadedPromise = null;
-          resolve();
-        }
+      loadRevisionList(
+        this.worktreePath,
+        this.filePath,
+        this.branch,
+        (args) => {
+          this._revisions = this._revisions.concat(args.revisions);
+          this._gotRevisionsCallbacks.forEach((callback) => callback(args));
+          if (args.allLoaded) {
+            this._revisionsLoadedPromise = null;
+            resolve();
+          }
 
-        // As soon as we have a decent number of revisions, kick off a data load.
-        // This primes the cache for the expected first request from the UI.
-        if (
-          args.allLoaded ||
-          (this._revisions.length > 50 &&
-            this._revisionData.size === 0 &&
-            this._revisionDataPromises.size === 0)
-        ) {
-          for (let i = 0; i < Math.min(50, this._revisions.length); i++) {
-            this.loadRevisionData(this._revisions[i]);
+          // As soon as we have a decent number of revisions, kick off a data load.
+          // This primes the cache for the expected first request from the UI.
+          if (
+            args.allLoaded ||
+            (this._revisions.length > 50 &&
+              this._revisionData.size === 0 &&
+              this._revisionDataPromises.size === 0)
+          ) {
+            for (let i = 0; i < Math.min(50, this._revisions.length); i++) {
+              this.loadRevisionData(this._revisions[i]);
+            }
           }
         }
-      });
+      );
     });
   }
 
@@ -93,7 +98,8 @@ export class LogDataCache {
     }
 
     const dataLoadPromises = [];
-    for (let i = startIndex; i < startIndex + count; i++) {
+    const endIndex = Math.min(startIndex + count, this._revisions.length);
+    for (let i = startIndex; i < endIndex; i++) {
       dataLoadPromises.push(this.loadRevisionData(this._revisions[i]));
     }
     return Promise.all(dataLoadPromises);

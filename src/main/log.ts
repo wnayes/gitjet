@@ -4,6 +4,7 @@ import { getNullObjectHash, launchDiffTool } from "./git";
 import { LogDataCache } from "./LogDataCache";
 import {
   IPCChannels,
+  RepositoryInfoArgs,
   SearchProgressData,
   SearchResultData,
 } from "../shared/ipc";
@@ -23,11 +24,13 @@ export function launchLogWindow(
   ipcMain.on(IPCChannels.Ready, () => {
     ready = true;
 
-    mainWindow.webContents.send(IPCChannels.RepositoryInfo, {
+    const repositoryInfo: RepositoryInfoArgs = {
       repository: repoPath,
       worktree: worktreePath,
+      filePath,
       branch,
-    });
+    };
+    mainWindow.webContents.send(IPCChannels.RepositoryInfo, repositoryInfo);
 
     const revisionsAllLoaded = logDataCache.revisionsFullyLoaded();
     mainWindow.webContents.send(IPCChannels.Revisions, {
@@ -44,15 +47,15 @@ export function launchLogWindow(
     }
   });
 
-  ipcMain.on(
+  ipcMain.handle(
     IPCChannels.LoadRevisionData,
-    (e, startIndex: number, count: number) => {
-      logDataCache.loadRevisionDataRange(startIndex, count).then((datas) => {
-        mainWindow.webContents.send(IPCChannels.RevisionData, {
-          startIndex,
-          data: datas,
-        });
+    async (e, startIndex: number, count: number) => {
+      const datas = await logDataCache.loadRevisionDataRange(startIndex, count);
+      mainWindow.webContents.send(IPCChannels.RevisionData, {
+        startIndex,
+        data: datas,
       });
+      return true;
     }
   );
 

@@ -23,3 +23,16 @@ export function getFileName(path: string): string {
   }
   return path.substring(lastSlashIndex + 1);
 }
+
+export function getDirectory(path: string): string | null {
+  path = removeTrailingSlashes(path);
+
+  const lastSlashIndex = Math.max(
+    path.lastIndexOf("/"),
+    path.lastIndexOf("\\")
+  );
+  if (lastSlashIndex === -1) {
+    return null;
+  }
+  return path.substring(0, lastSlashIndex);
+}

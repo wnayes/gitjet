@@ -11,6 +11,7 @@ import { SearchBox } from "./SearchBox";
 function useElectronCommunication(): void {
   const setRepository = useGitStore((state) => state.setRepository);
   const setWorktree = useGitStore((state) => state.setWorktree);
+  const setFilePath = useGitStore((state) => state.setFilePath);
   const setBranch = useGitStore((state) => state.setBranch);
   const setRevisionCountData = useGitStore(
     (state) => state.setRevisionDataCount
@@ -23,6 +24,7 @@ function useElectronCommunication(): void {
     gitjet.onReceiveRepositoryInfo((args) => {
       setRepository(args.repository);
       setWorktree(args.worktree);
+      setFilePath(args.filePath);
       setBranch(args.branch);
     });
     gitjet.onReceiveRevisionCount((args) => setRevisionCountData(args));

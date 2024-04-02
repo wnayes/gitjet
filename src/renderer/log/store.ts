@@ -9,6 +9,7 @@ import { SearchProgressData, SearchResultData } from "../../shared/ipc";
 export interface GitState {
   repository: string;
   worktree: string;
+  filePath: string | null | undefined;
   branch: string;
   revisionCountKnown: boolean;
   revisionData: (GitRevisionData | null | undefined)[];
@@ -19,6 +20,7 @@ export interface GitState {
   searchCurrentRevisionIndex: number;
   setRepository(repository: string): void;
   setWorktree(worktree: string): void;
+  setFilePath(filePath: string | null | undefined): void;
   setBranch(branch: string): void;
   setRevisionDataCount(args: RevisionCountArgs): void;
   setRevisionData(args: RevisionDataArgs): void;
@@ -32,6 +34,7 @@ export interface GitState {
 export const useGitStore = create<GitState>((set) => ({
   repository: "",
   worktree: "",
+  filePath: null,
   branch: "",
 
   revisionCountKnown: false,
@@ -46,6 +49,7 @@ export const useGitStore = create<GitState>((set) => ({
 
   setRepository: (repository) => set(() => ({ repository })),
   setWorktree: (worktree) => set(() => ({ worktree })),
+  setFilePath: (filePath) => set(() => ({ filePath })),
   setBranch: (branch) => set(() => ({ branch })),
 
   setRevisionDataCount: (args) => {

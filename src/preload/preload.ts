@@ -28,16 +28,9 @@ const bridge: GitJetMain = {
   },
 
   loadRevisionData: (startIndex: number, count: number) => {
-    return new Promise<void>((resolve) => {
-      ipcRenderer.send(IPCChannels.LoadRevisionData, startIndex, count);
-
-      const finishedCallback = (args: RevisionDataArgs) => {
-        if (args.startIndex === startIndex && args.data.length === count) {
-          _revisionDataCallbacks.delete(finishedCallback);
-          resolve();
-        }
-      };
-      _revisionDataCallbacks.add(finishedCallback);
+    return new Promise<void>(async (resolve) => {
+      await ipcRenderer.invoke(IPCChannels.LoadRevisionData, startIndex, count);
+      resolve();
     });
   },
 

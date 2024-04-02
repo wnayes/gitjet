@@ -90,16 +90,21 @@ export interface GotRevisionsArgs {
 
 export function loadRevisionList(
   worktreePath: string,
+  filePath: string | null | undefined,
   branch: string,
   onGotRevisions: (args: GotRevisionsArgs) => void
 ): void {
-  const revlist = spawn(GitPath, [
+  const revlistArgs = [
     "-C",
     worktreePath,
     "rev-list",
     "--first-parent",
     branch,
-  ]);
+  ];
+  if (filePath) {
+    revlistArgs.push("--", filePath);
+  }
+  const revlist = spawn(GitPath, revlistArgs);
 
   const OneSecondMs = 1000;
   let lastSendTime = performance.now();
@@ -135,12 +140,14 @@ export function loadRevisionList(
   });
 
   revlist.on("close", (code) => {
-    onGotRevisions({
-      revisions: revisionsToSend,
-      allLoaded: true,
-    });
+    if (code === 0) {
+      onGotRevisions({
+        revisions: revisionsToSend,
+        allLoaded: true,
+      });
 
-    totalRevisionsSent += revisionsToSend.length;
+      totalRevisionsSent += revisionsToSend.length;
+    }
   });
 }
 
@@ -149,6 +156,9 @@ export function loadRevisionData(
   revision: string
 ): Promise<GitRevisionData> {
   return new Promise((resolve, reject) => {
+    if (!revision) {
+      throw new Error("Missing revision");
+    }
     exec(
       `${GitPath} -C "${repoPath}" show --format=format:"%an%x00%ae%x00%aI%x00%B%x00" --name-status -m --first-parent --no-abbrev ${revision}`,
       function (error, stdout, stderr) {

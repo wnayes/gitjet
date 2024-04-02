@@ -7,6 +7,7 @@ import {
   getWorkingCopyRoot,
   isPathWithinGitRepository,
 } from "./git";
+import { getDirectory } from "../shared/paths";
 
 app.whenReady().then(async () => {
   const args = process.argv.slice(2);
@@ -47,7 +48,12 @@ async function startLogMode(args: string[]): Promise<void> {
     const worktreePathStat = await stat(worktreePath);
     if (worktreePathStat.isFile()) {
       filePath = worktreePath;
-      worktreePath = await getWorkingCopyRoot(worktreePath);
+      const worktreeDir = getDirectory(worktreePath);
+      if (!worktreeDir) {
+        console.error("Unexpected input, exiting.");
+        process.exit(1);
+      }
+      worktreePath = worktreeDir;
     }
   }
 
@@ -56,6 +62,7 @@ async function startLogMode(args: string[]): Promise<void> {
     process.exit(1);
   }
 
+  worktreePath = await getWorkingCopyRoot(worktreePath);
   repoPath = await getGitFolderPath(worktreePath);
 
   if (args.length === 2) {

@@ -15,6 +15,7 @@ export interface GitJetMain {
 export interface RepositoryInfoArgs {
   repository: string;
   worktree: string;
+  filePath: string | null | undefined;
   branch: string;
 }
 
