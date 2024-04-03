@@ -1,6 +1,6 @@
 import { BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
-import { getNullObjectHash, launchDiffTool } from "./git";
+import { getGitReferences, getNullObjectHash, launchDiffTool } from "./git";
 import { LogDataCache } from "./LogDataCache";
 import {
   IPCChannels,
@@ -45,6 +45,12 @@ export function launchLogWindow(
         } as RevisionCountArgs);
       });
     }
+
+    setTimeout(() => {
+      getGitReferences(worktreePath).then((map) => {
+        mainWindow.webContents.send(IPCChannels.Refs, map);
+      });
+    }, 16);
   });
 
   ipcMain.handle(

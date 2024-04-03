@@ -6,6 +6,7 @@
     --row-selected-bg-color: rgb(167, 214, 223);
     --row-body-text-color: rgb(83, 83, 83);
     --search-progress-text-color: rgb(80, 80, 80);
+    --ref-color: rgb(190, 190, 190);
 }
 
 html, body, #root {
@@ -87,6 +88,15 @@ html, body, #root {
 
 .hash {
     font-family: 'Courier New', Courier, monospace;
+}
+
+.ref {
+    font-size: 11px;
+    background-color: var(--ref-color);
+    border-radius: 6px;
+    padding: 2px 4px;
+    margin-right: 3px;
+    height: 100%;
 }
 
 .dataRow {

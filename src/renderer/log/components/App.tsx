@@ -17,6 +17,7 @@ function useElectronCommunication(): void {
     (state) => state.setRevisionDataCount
   );
   const setRevisionData = useGitStore((state) => state.setRevisionData);
+  const setRefs = useGitStore((state) => state.setRefs);
   const setSearchResults = useGitStore((state) => state.setSearchResults);
   const setSearchProgress = useGitStore((state) => state.setSearchProgress);
 
@@ -29,6 +30,7 @@ function useElectronCommunication(): void {
     });
     gitjet.onReceiveRevisionCount((args) => setRevisionCountData(args));
     gitjet.onReceiveRevisionData((args) => setRevisionData(args));
+    gitjet.onReceiveRefs((args) => setRefs(args));
     gitjet.onSearchResults((args) => setSearchResults(args));
     gitjet.onSearchProgress((args) => setSearchProgress(args));
     gitjet.ready();

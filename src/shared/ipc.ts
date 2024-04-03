@@ -1,4 +1,4 @@
-import { RevisionCountArgs, RevisionDataArgs } from "./GitTypes";
+import { GitRefMap, RevisionCountArgs, RevisionDataArgs } from "./GitTypes";
 
 export interface GitJetMain {
   ready(): void;
@@ -6,6 +6,7 @@ export interface GitJetMain {
   onReceiveRepositoryInfo(callback: (args: RepositoryInfoArgs) => void): void;
   onReceiveRevisionCount(callback: (args: RevisionCountArgs) => void): void;
   onReceiveRevisionData(callback: (args: RevisionDataArgs) => void): void;
+  onReceiveRefs(callback: (args: GitRefMap) => void): void;
   loadRevisionData(startIndex: number, count: number): Promise<void>;
   search(searchText: string): void;
   onSearchResults(callback: (results: SearchResultData) => void): void;
@@ -25,6 +26,7 @@ export enum IPCChannels {
   RepositoryInfo = "repositoryInfo",
   Revisions = "revisions",
   RevisionData = "revisionData",
+  Refs = "refs",
   LaunchDiffTool = "launchDiffTool",
   Search = "search",
   SearchProgress = "searchProgress",

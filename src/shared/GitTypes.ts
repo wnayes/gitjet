@@ -8,6 +8,10 @@ export interface RevisionDataArgs {
   data: GitRevisionData[];
 }
 
+export interface GitRefMap {
+  [revision: string]: string | string[];
+}
+
 export interface GitRevisionData {
   revision: string;
   author: string | null;
@@ -65,4 +69,17 @@ export function gitFileChangeEnumToTypeString(
     default:
       return "?";
   }
+}
+
+export function gitRefDisplayValue(refName: string): string {
+  if (!refName) {
+    return refName;
+  }
+  if (refName.startsWith("refs/heads/")) {
+    return refName.substring("refs/heads/".length);
+  }
+  if (refName.startsWith("refs/remotes/")) {
+    return refName.substring("refs/remotes/".length);
+  }
+  return refName;
 }

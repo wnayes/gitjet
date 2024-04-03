@@ -1,6 +1,7 @@
 import {
   GitFileChange,
   GitFileChangeType,
+  GitRefMap,
   GitRevisionData,
   gitFileChangeTypeStringToEnum,
 } from "../shared/GitTypes";
@@ -28,6 +29,7 @@ export function getGitFolderPath(worktreePath: string): Promise<string> {
       (error, stdout, stderr) => {
         if (error || stderr) {
           reject(error || stderr);
+          return;
         }
         resolve(stdout.trim());
       }
@@ -44,6 +46,7 @@ export function getWorkingCopyRoot(path: string): Promise<string> {
       (error, stdout, stderr) => {
         if (error || stderr) {
           reject(error || stderr);
+          return;
         }
         resolve(stdout.trim());
       }
@@ -60,6 +63,7 @@ export function getCurrentBranch(worktreePath: string): Promise<string> {
       (error, stdout, stderr) => {
         if (error || stderr) {
           reject(error || stderr);
+          return;
         }
         resolve(stdout.trim());
       }
@@ -76,6 +80,7 @@ export function getNullObjectHash(worktreePath: string): Promise<string> {
       (error, stdout, stderr) => {
         if (error || stderr) {
           reject(error || stderr);
+          return;
         }
         resolve(stdout.trim());
       }
@@ -235,5 +240,39 @@ export function launchDiffTool(
   });
   difftool.stderr.on("data", (data) => {
     console.error(data.toString());
+  });
+}
+
+export function getGitReferences(worktreePath: string): Promise<GitRefMap> {
+  return new Promise((resolve, reject) => {
+    exec(
+      `${GitPath} show-ref`,
+      { cwd: worktreePath },
+      (error, stdout, stderr) => {
+        if (error || stderr) {
+          reject(error || stderr);
+          return;
+        }
+        const map: GitRefMap = {};
+        const lines = stdout.trim().split("\n");
+        for (const line of lines) {
+          if (!line) {
+            continue;
+          }
+          const [revision, ref] = line.split(" ");
+          if (Object.prototype.hasOwnProperty.call(map, revision)) {
+            const existingValue = map[revision];
+            if (Array.isArray(existingValue)) {
+              existingValue.push(ref);
+            } else {
+              map[revision] = [existingValue, ref];
+            }
+          } else {
+            map[revision] = ref;
+          }
+        }
+        resolve(map);
+      }
+    );
   });
 }

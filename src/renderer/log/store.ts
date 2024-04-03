@@ -3,6 +3,7 @@ import {
   GitRevisionData,
   RevisionDataArgs,
   RevisionCountArgs,
+  GitRefMap,
 } from "../../shared/GitTypes";
 import { SearchProgressData, SearchResultData } from "../../shared/ipc";
 
@@ -13,6 +14,7 @@ export interface GitState {
   branch: string;
   revisionCountKnown: boolean;
   revisionData: (GitRevisionData | null | undefined)[];
+  refs: GitRefMap;
   selectedRevision: number;
   searchText: string;
   searching: boolean;
@@ -24,6 +26,7 @@ export interface GitState {
   setBranch(branch: string): void;
   setRevisionDataCount(args: RevisionCountArgs): void;
   setRevisionData(args: RevisionDataArgs): void;
+  setRefs(args: GitRefMap): void;
   setSelectedRevision(revisionIndex: number): void;
   setSearchText(searchText: string): void;
   setSearching(searching: boolean): void;
@@ -39,6 +42,7 @@ export const useGitStore = create<GitState>((set) => ({
 
   revisionCountKnown: false,
   revisionData: [],
+  refs: {},
 
   selectedRevision: -1,
 
@@ -67,6 +71,11 @@ export const useGitStore = create<GitState>((set) => ({
         revisionData[startIndex + i] = data[i];
       }
       return { revisionData };
+    });
+  },
+  setRefs: (args) => {
+    return set(() => {
+      return { refs: args };
     });
   },
 
