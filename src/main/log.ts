@@ -1,7 +1,7 @@
 import { BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
 import { getGitReferences, getNullObjectHash, launchDiffTool } from "./git";
-import { LogDataCache } from "./LogDataCache";
+import { ISearchInstance, LogDataCache } from "./LogDataCache";
 import {
   IPCChannels,
   RepositoryInfoArgs,
@@ -20,6 +20,7 @@ export function launchLogWindow(
 ) {
   let ready = false;
   const logDataCache = new LogDataCache(worktreePath, filePath, branch);
+  let searchInstance: ISearchInstance | null | undefined;
 
   ipcMain.on(IPCChannels.Ready, () => {
     ready = true;
@@ -65,9 +66,10 @@ export function launchLogWindow(
     }
   );
 
-  ipcMain.on(IPCChannels.Search, (e, searchText: string) => {
-    logDataCache.search({
+  function initSearchInstance(searchText: string, resuming: boolean) {
+    searchInstance = logDataCache.search({
       searchText,
+      resuming,
       onResult: (revisionMatch) => {
         const resultPayload: SearchResultData = {
           searchText,
@@ -86,6 +88,26 @@ export function launchLogWindow(
         );
       },
     });
+  }
+
+  ipcMain.on(IPCChannels.Search, (e, searchText: string) => {
+    if (searchInstance) {
+      searchInstance.stop();
+      searchInstance = null;
+    }
+    initSearchInstance(searchText, false);
+  });
+
+  ipcMain.on(IPCChannels.SearchPause, (e) => {
+    if (searchInstance) {
+      searchInstance.stop();
+    }
+  });
+
+  ipcMain.on(IPCChannels.SearchResume, (e) => {
+    if (searchInstance) {
+      initSearchInstance(searchInstance.searchText, true);
+    }
   });
 
   ipcMain.on(

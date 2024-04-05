@@ -20,6 +20,7 @@ export const DataList = ({ height, width }: IDataListProps) => {
 
   const searching = useGitStore((state) => state.searching);
   const searchResults = useGitStore((state) => state.searchResults);
+  const searchPaused = useGitStore((state) => state.searchPaused);
   const searchFinished = useGitStore(
     (state) => state.searchCurrentRevisionIndex === state.revisionData.length
   );
@@ -88,7 +89,7 @@ export const DataList = ({ height, width }: IDataListProps) => {
 
   let itemCount: number;
   if (searching) {
-    itemCount = searchResults.length + (searchFinished ? 0 : 1);
+    itemCount = searchResults.length + (searchFinished || searchPaused ? 0 : 1);
   } else {
     itemCount = revisionDatas.length;
   }

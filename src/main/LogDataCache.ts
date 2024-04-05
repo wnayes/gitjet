@@ -123,48 +123,65 @@ export class LogDataCache {
     return Promise.all(dataLoadPromises);
   }
 
-  public async search(options: ISearchOptions): Promise<void> {
-    if (!this._revisions.length && this._revisionsLoadedPromise) {
-      await this._revisionsLoadedPromise;
-    }
+  public search(options: ISearchOptions): ISearchInstance {
+    const abortController = new AbortController();
+    const searchInstance: ISearchInstance = {
+      searchText: options.searchText,
+      stop() {
+        abortController.abort();
+      },
+    };
 
-    const { searchText } = options;
-    let searchState = this._searchStates.get(searchText);
-    if (!searchState) {
-      searchState = {
-        currentIndex: 0,
-        matches: [],
-      };
-      this._searchStates.set(searchText, searchState);
-    } else if (searchState.matches.length > 0) {
-      options.onResult(searchState.matches);
-    }
-
-    this._revisionLoadLoop(searchState.currentIndex);
-
-    for (let i = searchState.currentIndex; i < this._revisions.length; i++) {
-      searchState.currentIndex = i;
-
-      const data = await this.loadRevisionData(this._revisions[i]);
-      if (isSearchMatch(searchText, data)) {
-        searchState.matches.push(i);
-        options.onResult([i]);
-      }
-
-      if (i % 100 === 0) {
-        options.onProgress?.(i);
-      }
-
-      // If we caught up to the revision load, wait for it now.
-      if (i === this._revisions.length - 1 && this._revisionsLoadedPromise) {
+    (async () => {
+      if (!this._revisions.length && this._revisionsLoadedPromise) {
         await this._revisionsLoadedPromise;
       }
-    }
 
-    options.onProgress?.(this._revisions.length);
+      const { searchText } = options;
+      let searchState = this._searchStates.get(searchText);
+      if (!searchState) {
+        searchState = {
+          currentIndex: 0,
+          matches: [],
+        };
+        this._searchStates.set(searchText, searchState);
+      } else if (!options.resuming && searchState.matches.length > 0) {
+        options.onResult(searchState.matches);
+      }
+
+      this._revisionLoadLoop(searchState.currentIndex, abortController.signal);
+
+      let i: number;
+      for (i = searchState.currentIndex; i < this._revisions.length; i++) {
+        if (abortController.signal.aborted) {
+          break;
+        }
+
+        searchState.currentIndex = i;
+
+        const data = await this.loadRevisionData(this._revisions[i]);
+        if (isSearchMatch(searchText, data)) {
+          searchState.matches.push(i);
+          options.onResult([i]);
+        }
+
+        if (i % 100 === 0) {
+          options.onProgress?.(i);
+        }
+
+        // If we caught up to the revision load, wait for it now.
+        if (i === this._revisions.length - 1 && this._revisionsLoadedPromise) {
+          await this._revisionsLoadedPromise;
+        }
+      }
+
+      options.onProgress?.(i);
+    })();
+
+    return searchInstance;
   }
 
-  private _revisionLoadLoop(startIndex: number): void {
+  private _revisionLoadLoop(startIndex: number, signal: AbortSignal): void {
     const ConcurrentCount = cpus().length;
     let numInFlight = 0;
     let curIndex = startIndex;
@@ -172,7 +189,9 @@ export class LogDataCache {
 
     function onNext() {
       numInFlight--;
-      startMore();
+      if (!signal.aborted) {
+        startMore();
+      }
     }
 
     function startMore() {
@@ -196,8 +215,14 @@ interface SearchState {
 
 interface ISearchOptions {
   searchText: string;
+  resuming?: boolean;
   onResult(revisionMatch: number[]): void;
   onProgress?(currentRevision: number): void;
+}
+
+export interface ISearchInstance {
+  searchText: string;
+  stop(): void;
 }
 
 function isSearchMatch(searchText: string, data: GitRevisionData): boolean {

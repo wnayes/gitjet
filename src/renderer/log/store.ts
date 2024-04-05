@@ -18,6 +18,7 @@ export interface GitState {
   selectedRevision: number;
   searchText: string;
   searching: boolean;
+  searchPaused: boolean;
   searchResults: number[];
   searchCurrentRevisionIndex: number;
   setRepository(repository: string): void;
@@ -30,6 +31,7 @@ export interface GitState {
   setSelectedRevision(revisionIndex: number): void;
   setSearchText(searchText: string): void;
   setSearching(searching: boolean): void;
+  setSearchPaused(paused: boolean): void;
   setSearchResults(results: SearchResultData): void;
   setSearchProgress(progress: SearchProgressData): void;
 }
@@ -48,6 +50,7 @@ export const useGitStore = create<GitState>((set) => ({
 
   searchText: "",
   searching: false,
+  searchPaused: false,
   searchResults: [],
   searchCurrentRevisionIndex: -1,
 
@@ -86,10 +89,12 @@ export const useGitStore = create<GitState>((set) => ({
   setSearching: (searching) =>
     set(() => ({
       searching,
+      searchPaused: false,
       searchResults: [],
       selectedRevision: -1,
       searchCurrentRevisionIndex: -1,
     })),
+  setSearchPaused: (paused) => set(() => ({ searchPaused: paused })),
   setSearchResults: (results) =>
     set((state) => {
       if (state.searchText !== results.searchText) {
@@ -133,6 +138,16 @@ export function waitForSearchResults(count: number): Promise<void> {
       }
     });
   });
+}
+
+export function pauseSearch(): void {
+  useGitStore.getState().setSearchPaused(true);
+  gitjet.pauseSearch();
+}
+
+export function resumeSearch(): void {
+  useGitStore.getState().setSearchPaused(false);
+  gitjet.resumeSearch();
 }
 
 export function useRevisionData(

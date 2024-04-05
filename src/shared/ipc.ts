@@ -9,6 +9,8 @@ export interface GitJetMain {
   onReceiveRefs(callback: (args: GitRefMap) => void): void;
   loadRevisionData(startIndex: number, count: number): Promise<void>;
   search(searchText: string): void;
+  pauseSearch(): void;
+  resumeSearch(): void;
   onSearchResults(callback: (results: SearchResultData) => void): void;
   onSearchProgress(callback: (progress: SearchProgressData) => void): void;
 }
@@ -29,6 +31,8 @@ export enum IPCChannels {
   Refs = "refs",
   LaunchDiffTool = "launchDiffTool",
   Search = "search",
+  SearchPause = "searchPause",
+  SearchResume = "searchResume",
   SearchProgress = "searchProgress",
   SearchResult = "searchResult",
 }

@@ -1,5 +1,7 @@
 import { ChangeEventHandler, KeyboardEventHandler, useCallback } from "react";
-import { useGitStore } from "../store";
+import { pauseSearch, resumeSearch, useGitStore } from "../store";
+import { Button } from "../../components/Button";
+import { VscDebugPause, VscDebugStart } from "react-icons/vsc";
 
 export function SearchBox() {
   const searchText = useGitStore((state) => state.searchText);
@@ -58,6 +60,29 @@ function SearchExtras() {
   return (
     <div className="searchExtras">
       <span className="searchProgressText">{searchProgressText}</span>
+      <SearchControls />
     </div>
+  );
+}
+
+function SearchControls() {
+  const paused = useGitStore((state) => state.searchPaused);
+
+  const pauseResumeSearchOnClick = useCallback(() => {
+    if (paused) {
+      resumeSearch();
+    } else {
+      pauseSearch();
+    }
+  }, [paused]);
+
+  return (
+    <Button onClick={pauseResumeSearchOnClick} className="searchButton">
+      {paused ? (
+        <VscDebugStart color="green" />
+      ) : (
+        <VscDebugPause color="orange" />
+      )}
+    </Button>
   );
 }

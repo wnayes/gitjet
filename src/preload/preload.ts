@@ -46,6 +46,14 @@ const bridge: GitJetMain = {
     ipcRenderer.send(IPCChannels.Search, searchText);
   },
 
+  pauseSearch: () => {
+    ipcRenderer.send(IPCChannels.SearchPause);
+  },
+
+  resumeSearch: () => {
+    ipcRenderer.send(IPCChannels.SearchResume);
+  },
+
   onSearchResults: (callback) => {
     ipcRenderer.addListener(IPCChannels.SearchResult, (src, args) => {
       callback(args);
