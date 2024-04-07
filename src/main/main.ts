@@ -9,8 +9,17 @@ import {
 } from "./git";
 import { getDirectory } from "../shared/paths";
 
+// https://github.com/electron/windows-installer
+// https://gist.github.com/cappert/fac1dba362d6a93a90f4
+
+// The Windows installer will run the main entrypoint.
+// When installing, we don't start the app; we add reg keys, etc.
+if (require("electron-squirrel-startup")) {
+  app.quit();
+}
+
 app.whenReady().then(async () => {
-  const args = process.argv.slice(2);
+  const args = process.argv.slice(app.isPackaged ? 1 : 2);
   if (args.length === 0) {
     console.error("One or more arguments must be passed, exiting.");
     process.exit(1);
@@ -33,7 +42,6 @@ app.on("window-all-closed", () => {
 });
 
 async function startLogMode(args: string[]): Promise<void> {
-  let repoPath: string;
   let worktreePath: string;
   let filePath: string | null = null;
   let branch: string;
@@ -63,7 +71,7 @@ async function startLogMode(args: string[]): Promise<void> {
   }
 
   worktreePath = await getWorkingCopyRoot(worktreePath);
-  repoPath = await getGitFolderPath(worktreePath);
+  const repoPath = await getGitFolderPath(worktreePath);
 
   if (args.length === 2) {
     branch = args[1];

@@ -10,6 +10,11 @@ import {
 } from "../shared/ipc";
 import { RevisionCountArgs } from "../shared/GitTypes";
 
+declare global {
+  const MAIN_WINDOW_VITE_DEV_SERVER_URL: string;
+  const MAIN_WINDOW_VITE_NAME: string;
+}
+
 let mainWindow: BrowserWindow;
 
 export function launchLogWindow(
@@ -130,11 +135,28 @@ export function launchLogWindow(
     width: 1200,
     height: 800,
     webPreferences: {
-      preload: path.resolve(path.join(__dirname, "..", "preload", "dist.js")),
+      preload: path.resolve(path.join(__dirname, "preload.js")),
     },
   });
 
-  mainWindow.loadFile(path.join("src", "renderer", "log", "index.html"));
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(
+      `${MAIN_WINDOW_VITE_DEV_SERVER_URL}/src/renderer/log/index.html`
+    );
+  } else {
+    mainWindow.loadFile(
+      path.join(
+        __dirname,
+        "..",
+        "renderer",
+        MAIN_WINDOW_VITE_NAME,
+        "src",
+        "renderer",
+        "log",
+        "index.html"
+      )
+    );
+  }
 
   // mainWindow.webContents.openDevTools()
 }
