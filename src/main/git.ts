@@ -260,6 +260,9 @@ export function getGitReferences(worktreePath: string): Promise<GitRefMap> {
             continue;
           }
           const [revision, ref] = line.split(" ");
+          if (isIgnoredRef(ref)) {
+            continue;
+          }
           if (Object.prototype.hasOwnProperty.call(map, revision)) {
             const existingValue = map[revision];
             if (Array.isArray(existingValue)) {
@@ -275,4 +278,11 @@ export function getGitReferences(worktreePath: string): Promise<GitRefMap> {
       }
     );
   });
+}
+
+function isIgnoredRef(ref: string): boolean {
+  if (ref.startsWith("refs/prefetch/")) {
+    return true;
+  }
+  return false;
 }
