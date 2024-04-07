@@ -8,13 +8,11 @@ import {
   isPathWithinGitRepository,
 } from "./git";
 import { getDirectory } from "../shared/paths";
-
-// https://github.com/electron/windows-installer
-// https://gist.github.com/cappert/fac1dba362d6a93a90f4
+import { handleSquirrelSetup } from "./squirrel";
 
 // The Windows installer will run the main entrypoint.
 // When installing, we don't start the app; we add reg keys, etc.
-if (require("electron-squirrel-startup")) {
+if (handleSquirrelSetup(() => app.quit())) {
   app.quit();
 }
 
