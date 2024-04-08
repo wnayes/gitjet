@@ -14,6 +14,7 @@ export interface GitRefMap {
 
 export interface GitRevisionData {
   revision: string;
+  parents: string[];
   author: string | null;
   authorEmail: string | null;
   authorDate: string | null;

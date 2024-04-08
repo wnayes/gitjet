@@ -165,20 +165,25 @@ export function loadRevisionData(
       throw new Error("Missing revision");
     }
     exec(
-      `${GitPath} -C "${repoPath}" show --format=format:"%an%x00%ae%x00%aI%x00%B%x00" --name-status -m --first-parent --no-abbrev ${revision}`,
+      `${GitPath} -C "${repoPath}" show --format=format:"%P%x00%an%x00%ae%x00%aI%x00%B%x00" --name-status -m --first-parent --no-abbrev ${revision}`,
       function (error, stdout, stderr) {
+        if (stderr) {
+          console.error(stderr);
+        }
         try {
           const lines = stdout.split("\x00");
+          console.log(lines);
           const data: GitRevisionData = {
             revision,
-            author: lines[0],
-            authorEmail: lines[1],
-            authorDate: lines[2],
+            parents: lines[0].split(" "),
+            author: lines[1],
+            authorEmail: lines[2],
+            authorDate: lines[3],
             subject: null,
             body: null,
             changes: null,
           };
-          const message = lines[3];
+          const message = lines[4];
           const bodyBreak = message.indexOf("\n\n");
           if (bodyBreak > 0) {
             data.subject = message.substring(0, bodyBreak);
@@ -188,7 +193,7 @@ export function loadRevisionData(
           }
 
           const changes: GitFileChange[] = [];
-          const changeLines = lines[4].split("\n");
+          const changeLines = lines[5].split("\n");
           for (let i = 1; i < changeLines.length - 1; i++) {
             const line = changeLines[i];
             const typeString = line[0];

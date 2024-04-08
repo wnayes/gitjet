@@ -61,14 +61,14 @@ export const useGitStore = create<GitState>((set) => ({
 
   setRevisionDataCount: (args) => {
     return set((state) => {
-      let revisionData = [...state.revisionData];
+      const revisionData = [...state.revisionData];
       revisionData.length = args.revisionCount;
       return { revisionData, revisionCountKnown: args.allLoaded };
     });
   },
   setRevisionData: (args) => {
     return set((state) => {
-      let { startIndex, data } = args;
+      const { startIndex, data } = args;
       const revisionData = [...state.revisionData];
       for (let i = 0; i < data.length; i++) {
         revisionData[startIndex + i] = data[i];

@@ -142,6 +142,10 @@ html, body, #root {
     overflow: hidden;
 }
 
+.mergeCommitInfo {
+    font-size: 11px;
+}
+
 .messageBody {
     color: var(--row-body-text-color);
 }

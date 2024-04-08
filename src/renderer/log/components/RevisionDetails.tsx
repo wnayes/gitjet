@@ -1,6 +1,8 @@
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { useRevisionData } from "../store";
 import { FileChangesList } from "./FileChangesList";
+import { GitRevisionData } from "../../../shared/GitTypes";
+import { HashAbbrLength } from "../constants";
 
 interface IRevisionDetailsProps {
   revisionIndex: number;
@@ -17,6 +19,7 @@ export const RevisionDetails = ({ revisionIndex }: IRevisionDetailsProps) => {
       <PanelGroup direction="vertical">
         <Panel minSize={5} defaultSize={40}>
           <div className="messageDisplay">
+            <MergeCommitInfo revisionData={revisionData} />
             {revisionData.subject}
             {"\n\n"}
             {revisionData.body}
@@ -30,3 +33,19 @@ export const RevisionDetails = ({ revisionIndex }: IRevisionDetailsProps) => {
     </>
   );
 };
+
+function MergeCommitInfo({ revisionData }: { revisionData: GitRevisionData }) {
+  if (!revisionData.parents || revisionData.parents.length <= 1) {
+    return null;
+  }
+
+  return (
+    <div className="mergeCommitInfo">
+      Merge commit. Other parents:{" "}
+      {revisionData.parents
+        .slice(1)
+        .map((hash) => hash.substring(0, HashAbbrLength))
+        .join(", ")}
+    </div>
+  );
+}

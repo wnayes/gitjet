@@ -1,3 +1,5 @@
+export const HashAbbrLength = 10;
+
 const Widths = [90, 180, 180, "100%"];
 
 export function useColumnWidths(): (number | string)[] {
