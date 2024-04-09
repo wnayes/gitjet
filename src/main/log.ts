@@ -22,8 +22,6 @@ export function launchLogWindow(
   branch: string
 ) {
   let ready = false;
-  // eslint-disable-next-line prefer-const
-  let mainWindow: BrowserWindow;
   const logDataCache = new LogDataCache(
     repoPath,
     worktreePath,
@@ -32,7 +30,34 @@ export function launchLogWindow(
   );
   let searchInstance: ISearchInstance | null | undefined;
 
-  ipcMain.on(IPCChannels.Ready, (e) => {
+  const mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      preload: path.resolve(path.join(__dirname, "preload.js")),
+    },
+  });
+
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(
+      `${MAIN_WINDOW_VITE_DEV_SERVER_URL}/src/renderer/log/index.html`
+    );
+  } else {
+    mainWindow.loadFile(
+      path.join(
+        __dirname,
+        "..",
+        "renderer",
+        MAIN_WINDOW_VITE_NAME,
+        "src",
+        "renderer",
+        "log",
+        "index.html"
+      )
+    );
+  }
+
+  const onReady = (e: Electron.IpcMainInvokeEvent) => {
     if (e.sender !== mainWindow?.webContents) {
       return;
     }
@@ -66,22 +91,29 @@ export function launchLogWindow(
         mainWindow.webContents.send(IPCChannels.Refs, map);
       });
     }, 16);
-  });
+  };
+  ipcMain.on(IPCChannels.Ready, onReady);
+  mainWindow.on("closed", () => ipcMain.off(IPCChannels.Ready, onReady));
 
-  ipcMain.handle(
-    IPCChannels.LoadRevisionData,
-    async (e, startIndex: number, count: number) => {
-      if (e.sender !== mainWindow?.webContents) {
-        return;
-      }
-
-      const datas = await logDataCache.loadRevisionDataRange(startIndex, count);
-      mainWindow.webContents.send(IPCChannels.RevisionData, {
-        startIndex,
-        data: datas,
-      });
-      return true;
+  const onLoadRevisionData = async (
+    e: Electron.IpcMainInvokeEvent,
+    startIndex: number,
+    count: number
+  ) => {
+    if (e.sender !== mainWindow?.webContents) {
+      return;
     }
+
+    const datas = await logDataCache.loadRevisionDataRange(startIndex, count);
+    mainWindow.webContents.send(IPCChannels.RevisionData, {
+      startIndex,
+      data: datas,
+    });
+    return true;
+  };
+  ipcMain.handle(IPCChannels.LoadRevisionData, onLoadRevisionData);
+  mainWindow.on("closed", () =>
+    ipcMain.off(IPCChannels.LoadRevisionData, onLoadRevisionData)
   );
 
   function initSearchInstance(searchText: string, resuming: boolean) {
@@ -108,7 +140,7 @@ export function launchLogWindow(
     });
   }
 
-  ipcMain.on(IPCChannels.Search, (e, searchText: string) => {
+  const onSearch = (e: Electron.IpcMainInvokeEvent, searchText: string) => {
     if (e.sender !== mainWindow?.webContents) {
       return;
     }
@@ -118,9 +150,11 @@ export function launchLogWindow(
       searchInstance = null;
     }
     initSearchInstance(searchText, false);
-  });
+  };
+  ipcMain.on(IPCChannels.Search, onSearch);
+  mainWindow.on("closed", () => ipcMain.off(IPCChannels.Search, onSearch));
 
-  ipcMain.on(IPCChannels.SearchPause, (e) => {
+  const onSearchPause = (e: Electron.IpcMainInvokeEvent) => {
     if (e.sender !== mainWindow?.webContents) {
       return;
     }
@@ -128,9 +162,13 @@ export function launchLogWindow(
     if (searchInstance) {
       searchInstance.stop();
     }
-  });
+  };
+  ipcMain.on(IPCChannels.SearchPause, onSearchPause);
+  mainWindow.on("closed", () =>
+    ipcMain.off(IPCChannels.SearchPause, onSearchPause)
+  );
 
-  ipcMain.on(IPCChannels.SearchResume, (e) => {
+  const onSearchResume = (e: Electron.IpcMainInvokeEvent) => {
     if (e.sender !== mainWindow?.webContents) {
       return;
     }
@@ -138,54 +176,34 @@ export function launchLogWindow(
     if (searchInstance) {
       initSearchInstance(searchInstance.searchText, true);
     }
-  });
-
-  ipcMain.on(
-    IPCChannels.LaunchDiffTool,
-    async (e, revision: string, path: string) => {
-      if (e.sender !== mainWindow?.webContents) {
-        return;
-      }
-
-      if (
-        logDataCache.getRevisionAtIndex(logDataCache.getRevisionCount() - 1) ===
-        revision
-      ) {
-        // We need to use special arguments for the very first revision diff.
-        const nullHash = await getNullObjectHash(worktreePath);
-        launchDiffTool(worktreePath, nullHash, revision, path);
-      } else {
-        launchDiffTool(worktreePath, null, revision, path);
-      }
-    }
+  };
+  ipcMain.on(IPCChannels.SearchResume, onSearchResume);
+  mainWindow.on("closed", () =>
+    ipcMain.off(IPCChannels.SearchResume, onSearchResume)
   );
 
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    webPreferences: {
-      preload: path.resolve(path.join(__dirname, "preload.js")),
-    },
-  });
+  const onLaunchDiffTool = async (
+    e: Electron.IpcMainInvokeEvent,
+    revision: string,
+    path: string
+  ) => {
+    if (e.sender !== mainWindow?.webContents) {
+      return;
+    }
 
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(
-      `${MAIN_WINDOW_VITE_DEV_SERVER_URL}/src/renderer/log/index.html`
-    );
-  } else {
-    mainWindow.loadFile(
-      path.join(
-        __dirname,
-        "..",
-        "renderer",
-        MAIN_WINDOW_VITE_NAME,
-        "src",
-        "renderer",
-        "log",
-        "index.html"
-      )
-    );
-  }
-
-  // mainWindow.webContents.openDevTools()
+    if (
+      logDataCache.getRevisionAtIndex(logDataCache.getRevisionCount() - 1) ===
+      revision
+    ) {
+      // We need to use special arguments for the very first revision diff.
+      const nullHash = await getNullObjectHash(worktreePath);
+      launchDiffTool(worktreePath, nullHash, revision, path);
+    } else {
+      launchDiffTool(worktreePath, null, revision, path);
+    }
+  };
+  ipcMain.on(IPCChannels.LaunchDiffTool, onLaunchDiffTool);
+  mainWindow.on("closed", () =>
+    ipcMain.off(IPCChannels.LaunchDiffTool, onLaunchDiffTool)
+  );
 }
