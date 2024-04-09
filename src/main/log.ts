@@ -15,8 +15,6 @@ declare global {
   const MAIN_WINDOW_VITE_NAME: string;
 }
 
-let mainWindow: BrowserWindow;
-
 export function launchLogWindow(
   repoPath: string,
   worktreePath: string,
@@ -24,10 +22,21 @@ export function launchLogWindow(
   branch: string
 ) {
   let ready = false;
-  const logDataCache = new LogDataCache(worktreePath, filePath, branch);
+  // eslint-disable-next-line prefer-const
+  let mainWindow: BrowserWindow;
+  const logDataCache = new LogDataCache(
+    repoPath,
+    worktreePath,
+    filePath,
+    branch
+  );
   let searchInstance: ISearchInstance | null | undefined;
 
-  ipcMain.on(IPCChannels.Ready, () => {
+  ipcMain.on(IPCChannels.Ready, (e) => {
+    if (e.sender !== mainWindow?.webContents) {
+      return;
+    }
+
     ready = true;
 
     const repositoryInfo: RepositoryInfoArgs = {
@@ -62,6 +71,10 @@ export function launchLogWindow(
   ipcMain.handle(
     IPCChannels.LoadRevisionData,
     async (e, startIndex: number, count: number) => {
+      if (e.sender !== mainWindow?.webContents) {
+        return;
+      }
+
       const datas = await logDataCache.loadRevisionDataRange(startIndex, count);
       mainWindow.webContents.send(IPCChannels.RevisionData, {
         startIndex,
@@ -96,6 +109,10 @@ export function launchLogWindow(
   }
 
   ipcMain.on(IPCChannels.Search, (e, searchText: string) => {
+    if (e.sender !== mainWindow?.webContents) {
+      return;
+    }
+
     if (searchInstance) {
       searchInstance.stop();
       searchInstance = null;
@@ -104,12 +121,20 @@ export function launchLogWindow(
   });
 
   ipcMain.on(IPCChannels.SearchPause, (e) => {
+    if (e.sender !== mainWindow?.webContents) {
+      return;
+    }
+
     if (searchInstance) {
       searchInstance.stop();
     }
   });
 
   ipcMain.on(IPCChannels.SearchResume, (e) => {
+    if (e.sender !== mainWindow?.webContents) {
+      return;
+    }
+
     if (searchInstance) {
       initSearchInstance(searchInstance.searchText, true);
     }
@@ -118,6 +143,10 @@ export function launchLogWindow(
   ipcMain.on(
     IPCChannels.LaunchDiffTool,
     async (e, revision: string, path: string) => {
+      if (e.sender !== mainWindow?.webContents) {
+        return;
+      }
+
       if (
         logDataCache.getRevisionAtIndex(logDataCache.getRevisionCount() - 1) ===
         revision

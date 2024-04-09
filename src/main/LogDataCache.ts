@@ -1,22 +1,22 @@
 import { GitRevisionData } from "../shared/GitTypes";
-import { GotRevisionsArgs, loadRevisionData, loadRevisionList } from "./git";
+import { getRevisionDataCache } from "./RevisionDataCache";
+import { GotRevisionsArgs, loadRevisionList } from "./git";
 import { cpus } from "node:os";
 
 export class LogDataCache {
   private _revisions: string[] = [];
   private _revisionsLoadedPromise: Promise<void> | null;
-  private _revisionData: Map<string, GitRevisionData> = new Map();
-  private _revisionDataPromises: Map<string, Promise<GitRevisionData>> =
-    new Map();
   private _gotRevisionsCallbacks: Set<(args: GotRevisionsArgs) => void> =
     new Set();
   private _searchStates: Map<string, SearchState> = new Map();
 
   public constructor(
+    private repoPath: string,
     private worktreePath: string,
     private filePath: string | null | undefined,
     private branch: string
   ) {
+    const revDataCache = getRevisionDataCache(this.repoPath);
     this._revisionsLoadedPromise = new Promise((resolve) => {
       loadRevisionList(
         this.worktreePath,
@@ -35,11 +35,10 @@ export class LogDataCache {
           if (
             args.allLoaded ||
             (this._revisions.length > 50 &&
-              this._revisionData.size === 0 &&
-              this._revisionDataPromises.size === 0)
+              revDataCache.noRevisionDataLoadedYet())
           ) {
             for (let i = 0; i < Math.min(50, this._revisions.length); i++) {
-              this.loadRevisionData(this._revisions[i]);
+              revDataCache.loadRevisionData(this._revisions[i]);
             }
           }
         }
@@ -81,28 +80,6 @@ export class LogDataCache {
     });
   }
 
-  public loadRevisionData(revision: string): Promise<GitRevisionData> {
-    const data = this._revisionData.get(revision);
-    if (data) {
-      return Promise.resolve(data);
-    }
-
-    let dataPromise = this._revisionDataPromises.get(revision);
-    if (dataPromise) {
-      return dataPromise;
-    }
-
-    dataPromise = new Promise((resolve) => {
-      loadRevisionData(this.worktreePath, revision).then((data) => {
-        this._revisionData.set(revision, data);
-        this._revisionDataPromises.delete(revision);
-        resolve(data);
-      });
-    });
-    this._revisionDataPromises.set(revision, dataPromise);
-    return dataPromise;
-  }
-
   public async loadRevisionDataRange(
     startIndex: number,
     count: number
@@ -117,8 +94,9 @@ export class LogDataCache {
 
     const dataLoadPromises = [];
     const endIndex = Math.min(startIndex + count, this._revisions.length);
+    const revDataCache = getRevisionDataCache(this.repoPath);
     for (let i = startIndex; i < endIndex; i++) {
-      dataLoadPromises.push(this.loadRevisionData(this._revisions[i]));
+      dataLoadPromises.push(revDataCache.loadRevisionData(this._revisions[i]));
     }
     return Promise.all(dataLoadPromises);
   }
@@ -151,6 +129,8 @@ export class LogDataCache {
 
       this._revisionLoadLoop(searchState.currentIndex, abortController.signal);
 
+      const revDataCache = getRevisionDataCache(this.repoPath);
+
       let i: number;
       for (i = searchState.currentIndex; i < this._revisions.length; i++) {
         if (abortController.signal.aborted) {
@@ -159,7 +139,7 @@ export class LogDataCache {
 
         searchState.currentIndex = i;
 
-        const data = await this.loadRevisionData(this._revisions[i]);
+        const data = await revDataCache.loadRevisionData(this._revisions[i]);
         if (isSearchMatch(searchText, data)) {
           searchState.matches.push(i);
           options.onResult([i]);
@@ -186,6 +166,7 @@ export class LogDataCache {
     let numInFlight = 0;
     let curIndex = startIndex;
     const _this = this;
+    const revDataCache = getRevisionDataCache(this.repoPath);
 
     function onNext() {
       numInFlight--;
@@ -200,7 +181,9 @@ export class LogDataCache {
         curIndex < _this._revisions.length
       ) {
         numInFlight++;
-        _this.loadRevisionData(_this._revisions[curIndex++]).then(onNext);
+        revDataCache
+          .loadRevisionData(_this._revisions[curIndex++])
+          .then(onNext);
       }
     }
 
