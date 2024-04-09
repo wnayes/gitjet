@@ -172,7 +172,6 @@ export function loadRevisionData(
         }
         try {
           const lines = stdout.split("\x00");
-          console.log(lines);
           const data: GitRevisionData = {
             revision,
             parents: lines[0].split(" "),
