@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from "electron";
+import { BrowserWindow, WebContents, ipcMain } from "electron";
 import path from "node:path";
 import { getGitReferences, getNullObjectHash, launchDiffTool } from "./git";
 import { ISearchInstance, LogDataCache } from "./LogDataCache";
@@ -15,13 +15,88 @@ declare global {
   const MAIN_WINDOW_VITE_NAME: string;
 }
 
+interface LogWindow {
+  onReady(): void;
+  onLoadRevisionData(
+    startIndex: number,
+    count: number
+  ): Promise<boolean> | void;
+  onSearch(searchText: string): void;
+  onSearchPause(): void;
+  onSearchResume(): void;
+  onLaunchDiffTool(revision: string, path: string): void;
+  onShowLogForCommit(commit: string): void;
+}
+
+const _logWindows: Map<WebContents, LogWindow> = new Map();
+
+ipcMain.on(IPCChannels.Ready, (e: Electron.IpcMainInvokeEvent) => {
+  const win = _logWindows.get(e.sender);
+  if (win) {
+    win.onReady();
+  }
+});
+
+ipcMain.handle(
+  IPCChannels.LoadRevisionData,
+  (e: Electron.IpcMainInvokeEvent, startIndex: number, count: number) => {
+    const win = _logWindows.get(e.sender);
+    if (win) {
+      return win.onLoadRevisionData(startIndex, count);
+    }
+  }
+);
+
+ipcMain.on(
+  IPCChannels.Search,
+  (e: Electron.IpcMainInvokeEvent, searchText: string) => {
+    const win = _logWindows.get(e.sender);
+    if (win) {
+      win.onSearch(searchText);
+    }
+  }
+);
+
+ipcMain.on(IPCChannels.SearchPause, (e: Electron.IpcMainInvokeEvent) => {
+  const win = _logWindows.get(e.sender);
+  if (win) {
+    win.onSearchPause();
+  }
+});
+
+ipcMain.on(IPCChannels.SearchResume, (e: Electron.IpcMainInvokeEvent) => {
+  const win = _logWindows.get(e.sender);
+  if (win) {
+    win.onSearchResume();
+  }
+});
+
+ipcMain.on(
+  IPCChannels.LaunchDiffTool,
+  (e: Electron.IpcMainInvokeEvent, revision: string, path: string) => {
+    const win = _logWindows.get(e.sender);
+    if (win) {
+      win.onLaunchDiffTool(revision, path);
+    }
+  }
+);
+
+ipcMain.on(
+  IPCChannels.ShowLogForCommit,
+  (e: Electron.IpcMainInvokeEvent, commit: string) => {
+    const win = _logWindows.get(e.sender);
+    if (win) {
+      win.onShowLogForCommit(commit);
+    }
+  }
+);
+
 export function launchLogWindow(
   repoPath: string,
   worktreePath: string,
   filePath: string | null | undefined,
   branch: string
-) {
-  let ready = false;
+): void {
   const logDataCache = new LogDataCache(
     repoPath,
     worktreePath,
@@ -57,13 +132,7 @@ export function launchLogWindow(
     );
   }
 
-  const onReady = (e: Electron.IpcMainInvokeEvent) => {
-    if (e.sender !== mainWindow?.webContents) {
-      return;
-    }
-
-    ready = true;
-
+  const onReady = () => {
     const repositoryInfo: RepositoryInfoArgs = {
       repository: repoPath,
       worktree: worktreePath,
@@ -92,18 +161,8 @@ export function launchLogWindow(
       });
     }, 16);
   };
-  ipcMain.on(IPCChannels.Ready, onReady);
-  mainWindow.on("closed", () => ipcMain.off(IPCChannels.Ready, onReady));
 
-  const onLoadRevisionData = async (
-    e: Electron.IpcMainInvokeEvent,
-    startIndex: number,
-    count: number
-  ) => {
-    if (e.sender !== mainWindow?.webContents) {
-      return;
-    }
-
+  const onLoadRevisionData = async (startIndex: number, count: number) => {
     const datas = await logDataCache.loadRevisionDataRange(startIndex, count);
     mainWindow.webContents.send(IPCChannels.RevisionData, {
       startIndex,
@@ -111,10 +170,6 @@ export function launchLogWindow(
     });
     return true;
   };
-  ipcMain.handle(IPCChannels.LoadRevisionData, onLoadRevisionData);
-  mainWindow.on("closed", () =>
-    ipcMain.off(IPCChannels.LoadRevisionData, onLoadRevisionData)
-  );
 
   function initSearchInstance(searchText: string, resuming: boolean) {
     searchInstance = logDataCache.search({
@@ -140,57 +195,27 @@ export function launchLogWindow(
     });
   }
 
-  const onSearch = (e: Electron.IpcMainInvokeEvent, searchText: string) => {
-    if (e.sender !== mainWindow?.webContents) {
-      return;
-    }
-
+  const onSearch = (searchText: string) => {
     if (searchInstance) {
       searchInstance.stop();
       searchInstance = null;
     }
     initSearchInstance(searchText, false);
   };
-  ipcMain.on(IPCChannels.Search, onSearch);
-  mainWindow.on("closed", () => ipcMain.off(IPCChannels.Search, onSearch));
 
-  const onSearchPause = (e: Electron.IpcMainInvokeEvent) => {
-    if (e.sender !== mainWindow?.webContents) {
-      return;
-    }
-
+  const onSearchPause = () => {
     if (searchInstance) {
       searchInstance.stop();
     }
   };
-  ipcMain.on(IPCChannels.SearchPause, onSearchPause);
-  mainWindow.on("closed", () =>
-    ipcMain.off(IPCChannels.SearchPause, onSearchPause)
-  );
 
-  const onSearchResume = (e: Electron.IpcMainInvokeEvent) => {
-    if (e.sender !== mainWindow?.webContents) {
-      return;
-    }
-
+  const onSearchResume = () => {
     if (searchInstance) {
       initSearchInstance(searchInstance.searchText, true);
     }
   };
-  ipcMain.on(IPCChannels.SearchResume, onSearchResume);
-  mainWindow.on("closed", () =>
-    ipcMain.off(IPCChannels.SearchResume, onSearchResume)
-  );
 
-  const onLaunchDiffTool = async (
-    e: Electron.IpcMainInvokeEvent,
-    revision: string,
-    path: string
-  ) => {
-    if (e.sender !== mainWindow?.webContents) {
-      return;
-    }
-
+  const onLaunchDiffTool = async (revision: string, path: string) => {
     if (
       logDataCache.getRevisionAtIndex(logDataCache.getRevisionCount() - 1) ===
       revision
@@ -202,8 +227,23 @@ export function launchLogWindow(
       launchDiffTool(worktreePath, null, revision, path);
     }
   };
-  ipcMain.on(IPCChannels.LaunchDiffTool, onLaunchDiffTool);
-  mainWindow.on("closed", () =>
-    ipcMain.off(IPCChannels.LaunchDiffTool, onLaunchDiffTool)
-  );
+
+  const onShowLogForCommit = (commit: string) => {
+    launchLogWindow(repoPath, worktreePath, filePath, commit);
+  };
+
+  const { webContents } = mainWindow;
+  _logWindows.set(webContents, {
+    onReady,
+    onLoadRevisionData,
+    onSearch,
+    onSearchPause,
+    onSearchResume,
+    onLaunchDiffTool,
+    onShowLogForCommit,
+  });
+
+  mainWindow.on("closed", () => {
+    _logWindows.delete(webContents);
+  });
 }

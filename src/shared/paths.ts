@@ -3,11 +3,11 @@ export function normalizePath(path: string): string {
 }
 
 export function removeTrailingSlashes(path: string): string {
-  return path.replace(/[\\\/]+$/, "");
+  return path.replace(/[\\/]+$/, "");
 }
 
 export function removeGitFolderFromPath(path: string): string {
-  return path.replace(/[\\\/]+\.git[\\\/]*$/, "");
+  return path.replace(/[\\/]+\.git[\\/]*$/, "");
 }
 
 /**

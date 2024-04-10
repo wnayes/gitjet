@@ -34,6 +34,20 @@ export const RevisionDetails = ({ revisionIndex }: IRevisionDetailsProps) => {
   );
 };
 
+function ParentHashLogLink({ commitHash }: { commitHash: string }) {
+  return (
+    <a
+      className="link"
+      onClick={(e) => {
+        e.preventDefault();
+        gitjet.showLogForCommit(commitHash);
+      }}
+    >
+      {commitHash.substring(0, HashAbbrLength)}
+    </a>
+  );
+}
+
 function MergeCommitInfo({ revisionData }: { revisionData: GitRevisionData }) {
   if (!revisionData.parents || revisionData.parents.length <= 1) {
     return null;
@@ -44,8 +58,10 @@ function MergeCommitInfo({ revisionData }: { revisionData: GitRevisionData }) {
       Merge commit. Other parents:{" "}
       {revisionData.parents
         .slice(1)
-        .map((hash) => hash.substring(0, HashAbbrLength))
-        .join(", ")}
+        .map((hash, i) => [
+          i > 0 && ", ",
+          <ParentHashLogLink commitHash={hash} />,
+        ])}
     </div>
   );
 }

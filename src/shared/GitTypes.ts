@@ -84,3 +84,9 @@ export function gitRefDisplayValue(refName: string): string {
   }
   return refName;
 }
+
+const FullCommitHashRegex = /^[0-9a-f]{40}$/;
+
+export function looksLikeCommitHash(value: string): boolean {
+  return FullCommitHashRegex.test(value);
+}

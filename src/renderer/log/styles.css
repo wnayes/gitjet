@@ -8,6 +8,7 @@
     --row-body-text-color: rgb(83, 83, 83);
     --search-progress-text-color: rgb(80, 80, 80);
     --ref-color: rgb(211, 211, 211);
+    --link-color: rgb(5, 67, 92);
 }
 
 html, body, #root {
@@ -121,6 +122,14 @@ html, body, #root {
     height: 100%;
 }
 
+.link {
+    color: var(--link-color);
+}
+.link:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
 .dataRow {
     display: flex;
     align-items: center;
@@ -161,14 +170,6 @@ html, body, #root {
     display: flex;
     flex-direction: column;
     height: 100%;
-}
-
-.revisionDataTitle {
-    background-color: var(--secondary-color);
-    height: 24px;
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
 }
 
 .messageDisplay {

@@ -13,6 +13,7 @@ export interface GitJetMain {
   resumeSearch(): void;
   onSearchResults(callback: (results: SearchResultData) => void): void;
   onSearchProgress(callback: (progress: SearchProgressData) => void): void;
+  showLogForCommit(commit: string): void;
 }
 
 export interface RepositoryInfoArgs {
@@ -35,6 +36,7 @@ export enum IPCChannels {
   SearchResume = "searchResume",
   SearchProgress = "searchProgress",
   SearchResult = "searchResult",
+  ShowLogForCommit = "showLogForCommit",
 }
 
 export interface SearchResultData {

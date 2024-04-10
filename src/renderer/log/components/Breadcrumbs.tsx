@@ -5,6 +5,8 @@ import {
   removeGitFolderFromPath,
   removeTrailingSlashes,
 } from "../../../shared/paths";
+import { HashAbbrLength } from "../constants";
+import { looksLikeCommitHash } from "../../../shared/GitTypes";
 
 interface IBreadcrumbProps {
   caption: string;
@@ -56,12 +58,15 @@ const BranchSelectBreadcrumb = () => {
   const searching = useGitStore((state) => state.searching);
   const searchResultCount = useGitStore((state) => state.searchResults.length);
 
+  const branchDisplay = looksLikeCommitHash(branch)
+    ? branch.substring(0, HashAbbrLength)
+    : branch;
   const searchResultCountDisplay = searching ? `${searchResultCount} / ` : "";
   const revisionTotalDisplay = `${revisionCount}${revisionsLoaded ? "" : "+"}`;
 
   return (
     <Breadcrumb
-      caption={`${branch} (${searchResultCountDisplay}${revisionTotalDisplay})`}
+      caption={`${branchDisplay} (${searchResultCountDisplay}${revisionTotalDisplay})`}
     />
   );
 };

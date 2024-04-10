@@ -32,9 +32,15 @@ const bridge: GitJetMain = {
   },
 
   loadRevisionData: (startIndex: number, count: number) => {
-    return new Promise<void>(async (resolve) => {
-      await ipcRenderer.invoke(IPCChannels.LoadRevisionData, startIndex, count);
-      resolve();
+    return new Promise<void>((resolve) => {
+      (async () => {
+        await ipcRenderer.invoke(
+          IPCChannels.LoadRevisionData,
+          startIndex,
+          count
+        );
+        resolve();
+      })();
     });
   },
 
@@ -64,6 +70,10 @@ const bridge: GitJetMain = {
     ipcRenderer.addListener(IPCChannels.SearchProgress, (src, args) => {
       callback(args);
     });
+  },
+
+  showLogForCommit: (commit) => {
+    ipcRenderer.send(IPCChannels.ShowLogForCommit, commit);
   },
 };
 
