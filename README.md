@@ -2,7 +2,35 @@
 
 _Under Construction_ :construction:
 
-Fast git log viewer
+Fast Git GUI
+
+## Log
+
+A log viewer that prioritizes lazy loading as much data as possible to speed up
+initial display.
+
+    # Display log based on current working directory worktree
+    gitjet log
+
+    # Display log based on the given folder
+    gitjet log [folder]
+
+    # Display log for the given file
+    gitjet log [filepath]
+
+    # Display for the folder/file in the given branch
+    gitjet log [folder | filepath] [branch]
+
+## Blame
+
+A simple blame viewer. Currently takes data directly from
+`git blame --incremental` and presents it in a GUI.
+
+    # Blame a file at HEAD
+    gitjet blame [filepath]
+
+    # Blame a file starting at a revision
+    gitjet blame [revision] [filepath]
 
 ## License
 
