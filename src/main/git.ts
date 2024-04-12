@@ -7,6 +7,8 @@ import {
 } from "../shared/GitTypes";
 import { arrayAppend } from "../shared/arrays";
 import { spawn, exec } from "node:child_process";
+import { getGitRepoRelativePath } from "../shared/paths";
+import { BlameData } from "../shared/ipc";
 
 const GitPath = "git";
 
@@ -247,6 +249,27 @@ export function launchDiffTool(
   });
 }
 
+export function getFileContentsAtRevision(
+  repoPath: string,
+  filePath: string,
+  revision: string
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const pathForCall = getGitRepoRelativePath(repoPath, filePath);
+    exec(
+      `${GitPath} show ${revision}:${pathForCall}`,
+      { cwd: repoPath },
+      (error, stdout, stderr) => {
+        if (error || stderr) {
+          reject(error || stderr);
+          return;
+        }
+        resolve(stdout);
+      }
+    );
+  });
+}
+
 export function getGitReferences(worktreePath: string): Promise<GitRefMap> {
   return new Promise((resolve, reject) => {
     exec(
@@ -289,4 +312,138 @@ function isIgnoredRef(ref: string): boolean {
     return true;
   }
   return false;
+}
+
+export function loadBlameData(
+  worktreePath: string,
+  filePath: string,
+  commit: string | null | undefined,
+  onGotBlameData: (args: BlameData[]) => void
+): void {
+  const blameArgs = [
+    "-C",
+    worktreePath,
+    "blame",
+    "--incremental",
+    "--first-parent",
+    commit ?? "HEAD",
+    "--",
+    filePath,
+  ];
+  const blameProcess = spawn(GitPath, blameArgs);
+
+  const OneSecondMs = 1000;
+  let lastSendTime = performance.now();
+
+  let currentArgs: BlameData | null | undefined;
+  let argsReadyToSend: BlameData[] = [];
+
+  blameProcess.stdout.on("data", (data) => {
+    const lines = data.toString().split("\n");
+    for (const line of lines) {
+      if (!line) {
+        continue;
+      }
+      if (!currentArgs) {
+        currentArgs = {} as any;
+
+        const [revision, sourceLine, resultLine, numLines] = line.split(" ");
+        currentArgs!.revision = revision;
+        currentArgs!.sourceLine = parseInt(sourceLine, 10);
+        currentArgs!.resultLine = parseInt(resultLine, 10);
+        currentArgs!.numLines = parseInt(numLines, 10);
+      } else if (line.startsWith("author")) {
+        if (!currentArgs.revisionShortData) {
+          currentArgs.revisionShortData = { author: {} };
+        }
+        if (!currentArgs.revisionShortData.author) {
+          currentArgs.revisionShortData.author = {};
+        }
+
+        if (line.startsWith("author ")) {
+          currentArgs.revisionShortData.author!.name = line.substring(
+            "author ".length
+          );
+        } else if (line.startsWith("author-mail ")) {
+          currentArgs.revisionShortData.author!.email = line.substring(
+            "author-mail ".length
+          );
+        } else if (line.startsWith("author-time ")) {
+          currentArgs.revisionShortData.author!.time = line.substring(
+            "author-time ".length
+          );
+        } else if (line.startsWith("author-tz ")) {
+          currentArgs.revisionShortData.author!.tz = line.substring(
+            "author-tz ".length
+          );
+        } else {
+          console.warn("Unrecognized metadata: " + line);
+        }
+      } else if (line.startsWith("committer")) {
+        if (!currentArgs.revisionShortData) {
+          currentArgs.revisionShortData = { committer: {} };
+        }
+        if (!currentArgs.revisionShortData.committer) {
+          currentArgs.revisionShortData.committer = {};
+        }
+
+        if (line.startsWith("committer ")) {
+          currentArgs.revisionShortData.committer!.name = line.substring(
+            "committer ".length
+          );
+        } else if (line.startsWith("committer-mail ")) {
+          currentArgs.revisionShortData.committer!.email = line.substring(
+            "committer-mail ".length
+          );
+        } else if (line.startsWith("committer-time ")) {
+          currentArgs.revisionShortData.committer!.time = line.substring(
+            "committer-time ".length
+          );
+        } else if (line.startsWith("committer-tz ")) {
+          currentArgs.revisionShortData.committer!.tz = line.substring(
+            "committer-tz ".length
+          );
+        } else {
+          console.warn("Unrecognized metadata: " + line);
+        }
+      } else if (line.startsWith("summary ")) {
+        if (!currentArgs.revisionShortData) {
+          currentArgs.revisionShortData = {};
+        }
+        currentArgs.revisionShortData.summary = line.substring(
+          "summary ".length
+        );
+      } else if (line.startsWith("previous ")) {
+        currentArgs.previous = line.substring("previous ".length).split(" ")[0];
+      } else if (line.startsWith("boundary ")) {
+        // Do nothing? I think this means there is no previous commit.
+      } else if (line.startsWith("filename ")) {
+        if (!currentArgs) {
+          throw new Error("Unexpected state");
+        }
+        argsReadyToSend.push(currentArgs);
+        currentArgs = null;
+      }
+    }
+
+    if (
+      argsReadyToSend.length > 0 &&
+      performance.now() - lastSendTime > OneSecondMs
+    ) {
+      onGotBlameData(argsReadyToSend);
+      lastSendTime = performance.now();
+      argsReadyToSend = [];
+    }
+  });
+
+  blameProcess.stderr.on("data", (data) => {
+    console.error(`stderr: ${data}`);
+  });
+
+  blameProcess.on("close", (code) => {
+    if (code === 0 && argsReadyToSend.length > 0) {
+      onGotBlameData(argsReadyToSend);
+      argsReadyToSend = [];
+    }
+  });
 }

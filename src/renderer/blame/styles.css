@@ -1,0 +1,63 @@
+:root {
+    --secondary-color: rgb(197, 197, 197);
+}
+
+html, body, #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+}
+
+.app {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.blameFileLine {
+    font-family: 'Courier New', Courier, monospace;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    padding: 0 2px;
+}
+
+.blameFileLineNumber {
+    display: inline-block;
+    flex-shrink: 0;
+    height: 100%;
+    text-align: right;
+    padding-right: 2px;
+    margin-right: 4px;
+    user-select: none;
+    background-color: var(--secondary-color);
+}
+
+.blameFileLineRevision {
+    width: 30px;
+    flex-shrink: 0;
+    font-size: 10px;
+}
+
+.blameFileLineAuthor {
+    width: 120px;
+    font-size: 12px;
+    flex-shrink: 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.blameFileLineDate {
+    width: 65px;
+    font-size: 12px;
+    text-align: right;
+    padding-right: 2px;
+    flex-shrink: 0;
+    font-family: Arial, Helvetica, sans-serif;
+}

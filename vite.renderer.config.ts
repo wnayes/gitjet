@@ -15,6 +15,7 @@ export default defineConfig((env) => {
     build: {
       rollupOptions: {
         input: {
+          blame: resolve(__dirname, "src", "renderer", "blame", "index.html"),
           log: resolve(__dirname, "src", "renderer", "log", "index.html"),
         },
       },

@@ -1,5 +1,41 @@
 import { GitRefMap, RevisionCountArgs, RevisionDataArgs } from "./GitTypes";
 
+export interface GitJetBlameBridge {
+  ready(): void;
+  onReceiveFileContents(callback: (contents: string) => void): void;
+  onReceiveBlameData(callback: (blameData: BlameData[]) => void): void;
+}
+
+export enum BlameIPCChannels {
+  BlameWindowReady = "blameWindowReady",
+  BlameFileContents = "blameFileContents",
+  BlameData = "blameData",
+}
+
+export interface BlameData {
+  revision: string;
+  previous?: string;
+  revisionShortData?: RevisionShortData;
+  /** The line number of the line in the original file */
+  sourceLine: number;
+  /** The line number of the line in the final file */
+  resultLine: number;
+  numLines: number;
+}
+
+export interface RevisionShortData {
+  summary?: string;
+  author?: RevisionUserInfo;
+  committer?: RevisionUserInfo;
+}
+
+interface RevisionUserInfo {
+  name?: string;
+  email?: string;
+  time?: string;
+  tz?: string;
+}
+
 export interface GitJetMain {
   ready(): void;
   launchDiffTool(revision: string, path: string): void;

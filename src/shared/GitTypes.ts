@@ -90,3 +90,19 @@ const FullCommitHashRegex = /^[0-9a-f]{40}$/;
 export function looksLikeCommitHash(value: string): boolean {
   return FullCommitHashRegex.test(value);
 }
+
+/**
+ * Convert a git timestamp and timezone into a Date.
+ * @param time Unix time value.
+ * @param tz Time zone, like "-0500"
+ * @returns Date instance
+ */
+export function gitTimeAndTzToDate(time: string, tz: string): Date {
+  const sign = tz === "-" ? -1 : 1;
+  const hours = parseInt(tz.slice(1, 3), 10);
+  const minutes = parseInt(tz.slice(3), 10);
+  const offsetInSeconds = sign * (hours * 60 * 60 + minutes * 60);
+  const timestampMs = parseInt(time, 10) * 1000;
+  const timestampWithOffset = timestampMs + offsetInSeconds * 1000;
+  return new Date(timestampWithOffset);
+}

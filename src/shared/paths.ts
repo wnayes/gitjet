@@ -2,6 +2,10 @@ export function normalizePath(path: string): string {
   return path.replace(/[\\]/g, "/");
 }
 
+export function removeLeadingSlashes(path: string): string {
+  return path.replace(/^[\\/]+/, "");
+}
+
 export function removeTrailingSlashes(path: string): string {
   return path.replace(/[\\/]+$/, "");
 }
@@ -39,4 +43,23 @@ export function getDirectory(path: string): string | null {
     return null;
   }
   return path.substring(0, lastSlashIndex);
+}
+
+/**
+ * Makes a file path relative to its repository.
+ * For example, `"C:\A\repo\B\C\file.ts"` becomes `"B/C/file.ts"`
+ * @param repoPath Repository path.
+ * @param filePath File path.
+ * @returns Repo-relative path.
+ */
+export function getGitRepoRelativePath(
+  repoPath: string,
+  filePath: string
+): string {
+  repoPath = removeGitFolderFromPath(normalizePath(repoPath));
+  filePath = normalizePath(filePath);
+  if (filePath.startsWith(repoPath)) {
+    filePath = filePath.substring(repoPath.length);
+  }
+  return removeLeadingSlashes(filePath);
 }

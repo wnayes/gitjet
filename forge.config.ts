@@ -32,10 +32,18 @@ const config: ForgeConfig = {
           entry: "src/preload/preload.ts",
           config: "vite.preload.config.ts",
         },
+        {
+          entry: "src/preload/blamePreload.ts",
+          config: "vite.preload.config.ts",
+        },
       ],
       renderer: [
         {
           name: "main_window",
+          config: "vite.renderer.config.ts",
+        },
+        {
+          name: "blame_window",
           config: "vite.renderer.config.ts",
         },
       ],
