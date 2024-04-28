@@ -49,9 +49,6 @@ function Row({ index, style }: ListChildComponentProps<string[]>) {
       style={style}
       title={rowRevShortData?.summary}
     >
-      <span className="blameFileLineRevision">
-        {rowRevision?.substring(0, 4)}
-      </span>
       <span className="blameFileLineAuthor">
         {rowRevShortData?.author?.email?.substring(1)}
       </span>
