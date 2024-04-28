@@ -1,5 +1,6 @@
 import { app } from "electron";
 import { stat } from "node:fs/promises";
+import { isAbsolute, join, resolve } from "node:path";
 import { launchLogWindow } from "./log";
 import {
   getCurrentBranch,
@@ -63,6 +64,10 @@ async function startBlameMode(args: string[]): Promise<void> {
   } else {
     console.error(`Unrecognized command line arguments, exiting.`);
     process.exit(1);
+  }
+
+  if (!isAbsolute(filePath)) {
+    filePath = resolve(join(process.cwd(), filePath));
   }
 
   const filePathStat = await stat(filePath);
