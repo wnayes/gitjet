@@ -100,6 +100,10 @@ async function startLogMode(args: string[]): Promise<void> {
     // Only parameter is a working copy path or a file path.
     worktreePath = args[0];
 
+    if (!isAbsolute(worktreePath)) {
+      worktreePath = resolve(join(process.cwd(), worktreePath));
+    }
+
     const worktreePathStat = await stat(worktreePath);
     if (worktreePathStat.isFile()) {
       filePath = worktreePath;
