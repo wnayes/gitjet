@@ -1,5 +1,6 @@
 :root {
     --secondary-color: rgb(197, 197, 197);
+    --row-hover-bg-color: rgb(171, 207, 218);
 }
 
 html, body, #root {
@@ -33,7 +34,6 @@ html, body, #root {
     height: 100%;
     text-align: right;
     padding-right: 2px;
-    margin-right: 4px;
     background-color: var(--secondary-color);
 }
 
@@ -69,4 +69,12 @@ html, body, #root {
 
 .blameLineContent {
     height: 100%;
+    padding-left: 4px;
+}
+.blameLineContent:empty {
+    padding-left: 0;
+}
+
+.blameFileLine:hover .blameLineMetadata, .blameFileLine:hover .blameLineContent {
+    background-color: var(--row-hover-bg-color);
 }
