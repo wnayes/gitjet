@@ -71,6 +71,7 @@ export function launchBlameWindow(
     }
   );
 
+  const allBlameData: BlameData[] = [];
   const blameDataToSend: BlameData[] = [];
   loadBlameData(worktreePath, filePath, revision, (blameData) => {
     if (ready) {
@@ -78,18 +79,27 @@ export function launchBlameWindow(
     } else {
       blameDataToSend.push(...blameData);
     }
+    allBlameData.push(...blameData);
   });
 
   const onReady = () => {
+    // A reload of the browser, send all blame data again.
+    if (ready) {
+      blameWindow.webContents.send(BlameIPCChannels.BlameData, allBlameData);
+    }
+
     ready = true;
+
     if (typeof fileContents === "string") {
       blameWindow.webContents.send(
         BlameIPCChannels.BlameFileContents,
         fileContents
       );
     }
+
     if (blameDataToSend.length > 0) {
       blameWindow.webContents.send(BlameIPCChannels.BlameData, blameDataToSend);
+      blameDataToSend.length = 0;
     }
   };
 
