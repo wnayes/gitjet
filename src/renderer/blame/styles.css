@@ -24,7 +24,7 @@ html, body, #root {
     white-space: nowrap;
     display: flex;
     align-items: center;
-    padding: 0 2px;
+    padding-right: 2px;
 }
 
 .blameFileLineNumber {
@@ -34,19 +34,24 @@ html, body, #root {
     text-align: right;
     padding-right: 2px;
     margin-right: 4px;
-    user-select: none;
     background-color: var(--secondary-color);
 }
 
-.blameFileLineRevision {
-    width: 30px;
+.blameLineMetadata {
     flex-shrink: 0;
-    font-size: 10px;
+    display: flex;
+    position: sticky;
+    padding-left: 2px;
+    left: 0;
+    height: 100%;
+    background-color: white;
+    user-select: none;
 }
 
 .blameFileLineAuthor {
+    display: inline-block;
     width: 120px;
-    font-size: 12px;
+    font-size: 13px;
     flex-shrink: 0;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -55,9 +60,13 @@ html, body, #root {
 
 .blameFileLineDate {
     width: 65px;
-    font-size: 12px;
+    font-size: 13px;
     text-align: right;
     padding-right: 2px;
     flex-shrink: 0;
     font-family: Arial, Helvetica, sans-serif;
+}
+
+.blameLineContent {
+    height: 100%;
 }

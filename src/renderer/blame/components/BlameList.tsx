@@ -49,17 +49,20 @@ function Row({ index, style }: ListChildComponentProps<string[]>) {
       style={style}
       title={rowRevShortData?.summary}
     >
-      <span className="blameFileLineAuthor">
-        {rowRevShortData?.author?.email?.substring(1)}
+      <span className="blameLineMetadata">
+        <span className="blameFileLineAuthor">
+          {rowRevShortData?.author?.email?.substring(1)}
+        </span>
+        <span className="blameFileLineDate">{date?.toLocaleDateString()}</span>
+        <span
+          className="blameFileLineNumber"
+          style={{ width: getLineNumberColWidth(fileContents.length) }}
+        >
+          {index + 1}
+        </span>
       </span>
-      <span className="blameFileLineDate">{date?.toLocaleDateString()}</span>
-      <span
-        className="blameFileLineNumber"
-        style={{ width: getLineNumberColWidth(fileContents.length) }}
-      >
-        {index + 1}
-      </span>
-      {fileContents[index]}
+
+      <span className="blameLineContent">{fileContents[index]}</span>
     </div>
   );
 }
