@@ -73,7 +73,6 @@ export function launchBlameWindow(
 
   const blameDataToSend: BlameData[] = [];
   loadBlameData(worktreePath, filePath, revision, (blameData) => {
-    console.log(blameData);
     if (ready) {
       blameWindow.webContents.send(BlameIPCChannels.BlameData, blameData);
     } else {
