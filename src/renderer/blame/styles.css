@@ -1,6 +1,7 @@
 :root {
     --secondary-color: rgb(197, 197, 197);
-    --row-hover-bg-color: rgb(171, 207, 218);
+    --row-hover-bg-color: rgb(212, 235, 242);
+    --row-selected-bg-color: rgb(139, 186, 194);
 }
 
 html, body, #root {
@@ -75,6 +76,13 @@ html, body, #root {
     padding-left: 0;
 }
 
-.blameFileLine:hover .blameLineMetadata, .blameFileLine:hover .blameLineContent {
+.blameFileLine:not(.selected):hover .blameLineMetadata,
+.blameFileLine.hovered:not(.selected) .blameLineMetadata,
+.blameFileLine:hover .blameLineContent,
+.blameFileLine.hovered .blameLineContent {
     background-color: var(--row-hover-bg-color);
+}
+
+.blameFileLine.selected .blameLineMetadata, .blameFileLine.selected .blameLineContent {
+    background-color: var(--row-selected-bg-color);
 }

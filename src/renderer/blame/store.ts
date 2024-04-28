@@ -9,10 +9,14 @@ export interface BlameState {
   fileContents: string[];
   revisionsByLine: string[];
   revisionShortData: { [revision: string]: RevisionShortData };
+  hoveredRevision: string;
+  selectedRevision: string;
   setRepository(repository: string): void;
   setWorktree(worktree: string): void;
   setFilePath(filePath: string): void;
   setRevision(branch: string): void;
+  setHoveredRevision(revision: string): void;
+  setSelectedRevision(revision: string): void;
   setFileContents(fileContents: string[]): void;
   applyBlameData(blameData: BlameData[]): void;
 }
@@ -25,11 +29,15 @@ export const useBlameStore = create<BlameState>((set) => ({
   fileContents: [],
   revisionsByLine: [],
   revisionShortData: {},
+  hoveredRevision: "",
+  selectedRevision: "",
 
   setRepository: (repository) => set(() => ({ repository })),
   setWorktree: (worktree) => set(() => ({ worktree })),
   setFilePath: (filePath) => set(() => ({ filePath })),
   setRevision: (revision) => set(() => ({ revision })),
+  setHoveredRevision: (hoveredRevision) => set(() => ({ hoveredRevision })),
+  setSelectedRevision: (selectedRevision) => set(() => ({ selectedRevision })),
   setFileContents: (fileContents) =>
     set((state) => {
       let revisionsByLine = state.revisionsByLine;

@@ -2,11 +2,36 @@ import { FixedSizeList as List, ListChildComponentProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { useBlameStore } from "../store";
 import { RevisionShortData } from "../../../shared/ipc";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { gitTimeAndTzToDate } from "../../../shared/GitTypes";
 
 export const BlameList = () => {
   const fileContents = useBlameStore((state) => state.fileContents);
+  const setSelectedRevision = useBlameStore(
+    (state) => state.setSelectedRevision
+  );
+
+  const listContainerElRef = useRef<HTMLDivElement>(null);
+
+  const onListElementClicked = useCallback(
+    (event: MouseEvent) => {
+      const revision = getRevisionFromMouseEvent(event);
+      if (revision) {
+        setSelectedRevision(revision);
+      }
+    },
+    [setSelectedRevision]
+  );
+
+  useEffect(() => {
+    const containerEl = listContainerElRef.current;
+    if (containerEl) {
+      containerEl.addEventListener("click", onListElementClicked);
+      return () =>
+        containerEl.removeEventListener("click", onListElementClicked);
+    }
+  });
+
   return (
     <AutoSizer>
       {({ height, width }) => {
@@ -16,6 +41,7 @@ export const BlameList = () => {
             itemCount={fileContents.length}
             itemSize={18}
             width={width}
+            outerRef={listContainerElRef}
           >
             {Row}
           </List>
@@ -33,6 +59,24 @@ function Row({ index, style }: ListChildComponentProps<string[]>) {
   const rowRevShortData: RevisionShortData | undefined = useBlameStore(
     (state) => state.revisionShortData[rowRevision]
   );
+  const rowSelected = useBlameStore(
+    (state) => rowRevision === state.selectedRevision
+  );
+  const rowHovered = useBlameStore(
+    (state) => rowRevision === state.hoveredRevision
+  );
+
+  const setHoveredRevision = useBlameStore((state) => state.setHoveredRevision);
+  const onMouseEnter = useCallback(() => {
+    if (rowSelected) {
+      setHoveredRevision("");
+    } else {
+      setHoveredRevision(rowRevision);
+    }
+  }, [rowSelected, rowRevision, setHoveredRevision]);
+  const onMouseLeave = useCallback(() => {
+    setHoveredRevision("");
+  }, []);
 
   const date = useMemo(() => {
     const time = rowRevShortData?.committer?.time;
@@ -43,11 +87,22 @@ function Row({ index, style }: ListChildComponentProps<string[]>) {
     return null;
   }, [rowRevShortData]);
 
+  let rowClasses = "blameFileLine";
+  if (rowSelected) {
+    rowClasses += " selected";
+  }
+  if (rowHovered) {
+    rowClasses += " hovered";
+  }
+
   return (
     <div
-      className="blameFileLine"
+      className={rowClasses}
       style={style}
       title={rowRevShortData?.summary}
+      data-index={index}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       <span className="blameLineMetadata">
         <span className="blameFileLineAuthor">
@@ -61,10 +116,28 @@ function Row({ index, style }: ListChildComponentProps<string[]>) {
           {index + 1}
         </span>
       </span>
-
       <span className="blameLineContent">{fileContents[index]}</span>
     </div>
   );
+}
+
+function getRevisionFromMouseEvent(event: MouseEvent): string | null {
+  const targetElement = event.target as Element;
+  if (targetElement) {
+    const rowElement = targetElement.closest(
+      ".blameFileLine"
+    ) as HTMLDivElement;
+    if (rowElement) {
+      const dataIndex = parseInt(rowElement.dataset.index!, 10);
+      if (dataIndex >= 0) {
+        const revision = useBlameStore.getState().revisionsByLine[dataIndex];
+        if (revision) {
+          return revision;
+        }
+      }
+    }
+  }
+  return null;
 }
 
 function getLineNumberColWidth(lines: number): number {
