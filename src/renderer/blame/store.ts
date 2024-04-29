@@ -9,6 +9,7 @@ export interface BlameState {
   fileContents: string[];
   revisionsByLine: string[];
   revisionShortData: { [revision: string]: RevisionShortData };
+  previousRevisions: { [revision: string]: string | undefined };
   hoveredRevision: string;
   selectedRevision: string;
   setRepository(repository: string): void;
@@ -29,6 +30,7 @@ export const useBlameStore = create<BlameState>((set) => ({
   fileContents: [],
   revisionsByLine: [],
   revisionShortData: {},
+  previousRevisions: {},
   hoveredRevision: "",
   selectedRevision: "",
 
@@ -51,6 +53,7 @@ export const useBlameStore = create<BlameState>((set) => ({
     set((state) => {
       const revisionsByLine = [...state.revisionsByLine];
       const revisionShortData = { ...state.revisionShortData };
+      let previousRevisions;
       for (const data of blameData) {
         for (
           let i = data.resultLine;
@@ -62,7 +65,20 @@ export const useBlameStore = create<BlameState>((set) => ({
         if (data.revisionShortData) {
           revisionShortData[data.revision] = data.revisionShortData;
         }
+        if (
+          data.previous &&
+          !(previousRevisions ?? state.previousRevisions)[data.revision]
+        ) {
+          if (!previousRevisions) {
+            previousRevisions = { ...state.previousRevisions };
+          }
+          previousRevisions[data.revision] = data.previous;
+        }
       }
-      return { revisionsByLine, revisionShortData };
+      return {
+        revisionsByLine,
+        revisionShortData,
+        previousRevisions: previousRevisions ?? state.previousRevisions,
+      };
     }),
 }));

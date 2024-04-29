@@ -9,10 +9,21 @@ declare global {
 }
 
 interface BlameWindow {
+  onBlameOtherRevision(revision: string): void;
   onReady(): void;
 }
 
 const _blameWindows: Map<WebContents, BlameWindow> = new Map();
+
+ipcMain.on(
+  BlameIPCChannels.BlameOtherRevision,
+  (e: Electron.IpcMainInvokeEvent, revision: string) => {
+    const win = _blameWindows.get(e.sender);
+    if (win) {
+      win.onBlameOtherRevision(revision);
+    }
+  }
+);
 
 ipcMain.on(
   BlameIPCChannels.BlameWindowReady,
@@ -103,8 +114,13 @@ export function launchBlameWindow(
     }
   };
 
+  const onBlameOtherRevision = (revision: string) => {
+    launchBlameWindow(repoPath, worktreePath, filePath, revision);
+  };
+
   const { webContents } = blameWindow;
   _blameWindows.set(webContents, {
+    onBlameOtherRevision,
     onReady,
   });
 

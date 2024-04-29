@@ -5,7 +5,13 @@ import {
   type GitJetBlameBridge,
 } from "../shared/ipc";
 
+import "./commonPreload";
+
 const bridge: GitJetBlameBridge = {
+  blameOtherRevision: (revision: string) => {
+    ipcRenderer.send(BlameIPCChannels.BlameOtherRevision, revision);
+  },
+
   ready: () => ipcRenderer.send(BlameIPCChannels.BlameWindowReady),
 
   onReceiveFileContents(callback: (contents: string) => void): void {

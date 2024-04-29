@@ -4,6 +4,11 @@ import { useBlameStore } from "../store";
 import { RevisionShortData } from "../../../shared/ipc";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { gitTimeAndTzToDate } from "../../../shared/GitTypes";
+import {
+  ContextMenu,
+  ContextMenuItem,
+  showContextMenu,
+} from "../../components/ContextMenu";
 
 export const BlameList = () => {
   const fileContents = useBlameStore((state) => state.fileContents);
@@ -23,12 +28,38 @@ export const BlameList = () => {
     [setSelectedRevision]
   );
 
+  const onListElementContextMenu = useCallback((event: MouseEvent) => {
+    const revision = getRevisionFromMouseEvent(event);
+    if (revision) {
+      const previousRevision =
+        useBlameStore.getState().previousRevisions[revision];
+      showContextMenu(
+        <ContextMenu>
+          {previousRevision && (
+            <ContextMenuItem
+              label="Blame previous revision"
+              onClick={() => {
+                gitjetBlame.blameOtherRevision(previousRevision);
+              }}
+            />
+          )}
+        </ContextMenu>
+      );
+    }
+  }, []);
+
   useEffect(() => {
     const containerEl = listContainerElRef.current;
     if (containerEl) {
       containerEl.addEventListener("click", onListElementClicked);
-      return () =>
+      containerEl.addEventListener("contextmenu", onListElementContextMenu);
+      return () => {
         containerEl.removeEventListener("click", onListElementClicked);
+        containerEl.removeEventListener(
+          "contextmenu",
+          onListElementContextMenu
+        );
+      };
     }
   });
 

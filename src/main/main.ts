@@ -11,6 +11,7 @@ import {
 import { getDirectory } from "../shared/paths";
 import { handleSquirrelSetup } from "./squirrel";
 import { launchBlameWindow } from "./blame";
+import { initializeContextMenuSupport } from "./ContextMenu";
 
 // The Windows installer will run the main entrypoint.
 // When installing, we don't start the app; we add reg keys, etc.
@@ -24,6 +25,8 @@ app.whenReady().then(async () => {
     console.error("One or more arguments must be passed, exiting.");
     process.exit(1);
   }
+
+  initializeContextMenuSupport();
 
   const mode = args[0];
   switch (mode) {

@@ -1,6 +1,19 @@
+import { IMenuItemOptions } from "./ContextMenu";
 import { GitRefMap, RevisionCountArgs, RevisionDataArgs } from "./GitTypes";
 
+export interface GitJetCommonBridge {
+  showContextMenu(
+    menuItems: IMenuItemOptions[],
+    callback: (choice: number) => void
+  ): void;
+}
+
+export enum CommonIPCChannels {
+  ShowContextMenu = "ShowContextMenu",
+}
+
 export interface GitJetBlameBridge {
+  blameOtherRevision(revision: string): void;
   ready(): void;
   onReceiveFileContents(callback: (contents: string) => void): void;
   onReceiveBlameData(callback: (blameData: BlameData[]) => void): void;
@@ -10,6 +23,7 @@ export enum BlameIPCChannels {
   BlameWindowReady = "blameWindowReady",
   BlameFileContents = "blameFileContents",
   BlameData = "blameData",
+  BlameOtherRevision = "blameOtherRevision",
 }
 
 export interface BlameData {

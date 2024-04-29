@@ -2,6 +2,8 @@ import { contextBridge, ipcRenderer } from "electron";
 import { IPCChannels, type GitJetMain } from "../shared/ipc";
 import { RevisionDataArgs } from "../shared/GitTypes";
 
+import "./commonPreload";
+
 const _revisionDataCallbacks: Set<(args: RevisionDataArgs) => void> = new Set();
 
 ipcRenderer.addListener(IPCChannels.RevisionData, (src, args) => {
