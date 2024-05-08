@@ -257,7 +257,7 @@ export function getFileContentsAtRevision(
   return new Promise((resolve, reject) => {
     const pathForCall = getGitRepoRelativePath(repoPath, filePath);
     exec(
-      `${GitPath} show ${revision}:${pathForCall}`,
+      `${GitPath} show ${revision}:"${pathForCall}"`,
       { cwd: repoPath },
       (error, stdout, stderr) => {
         if (error || stderr) {
