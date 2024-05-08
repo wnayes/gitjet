@@ -44,7 +44,10 @@ export function getWorkingCopyRoot(path: string): Promise<string> {
   return new Promise((resolve, reject) => {
     exec(
       `${GitPath} rev-parse --path-format=absolute --show-toplevel`,
-      { cwd: path },
+      {
+        cwd: path,
+        env: {}, // Clear any GIT_DIR from env so that we evaluate correctly.
+      },
       (error, stdout, stderr) => {
         if (error || stderr) {
           reject(error || stderr);
