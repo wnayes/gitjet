@@ -70,7 +70,7 @@ async function startBlameMode(args: string[]): Promise<void> {
   }
 
   if (!isAbsolute(filePath)) {
-    filePath = resolve(join(process.cwd(), filePath));
+    filePath = resolve(join(getCurrentWorkingDirectory(), filePath));
   }
 
   const filePathStat = await stat(filePath);
@@ -98,13 +98,13 @@ async function startLogMode(args: string[]): Promise<void> {
 
   if (args.length === 0) {
     // Assume the current working directory is the path of interest.
-    worktreePath = process.cwd();
+    worktreePath = getCurrentWorkingDirectory();
   } else {
     // Only parameter is a working copy path or a file path.
     worktreePath = args[0];
 
     if (!isAbsolute(worktreePath)) {
-      worktreePath = resolve(join(process.cwd(), worktreePath));
+      worktreePath = resolve(join(getCurrentWorkingDirectory(), worktreePath));
     }
 
     const worktreePathStat = await stat(worktreePath);
@@ -134,4 +134,16 @@ async function startLogMode(args: string[]): Promise<void> {
   }
 
   launchLogWindow(repoPath, worktreePath, filePath, branch);
+}
+
+function getCurrentWorkingDirectory(): string {
+  const cwd = process.cwd();
+
+  // If we run from a git alias, we really want cwd + GIT_PREFIX.
+  const gitPrefix = process.env["GIT_PREFIX"];
+  if (gitPrefix) {
+    return resolve(join(cwd, gitPrefix));
+  }
+
+  return cwd;
 }
