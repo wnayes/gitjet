@@ -70,7 +70,7 @@ export function launchBlameWindow(
 
   let ready = false;
   let fileContents: string | undefined;
-  getFileContentsAtRevision(repoPath, filePath, revision ?? "HEAD").then(
+  getFileContentsAtRevision(worktreePath, filePath, revision ?? "HEAD").then(
     (text) => {
       fileContents = text;
       if (ready) {

@@ -7,7 +7,7 @@ import {
 } from "../shared/GitTypes";
 import { arrayAppend } from "../shared/arrays";
 import { spawn, exec } from "node:child_process";
-import { getGitRepoRelativePath } from "../shared/paths";
+import { getGitWorktreeRelativePath } from "../shared/paths";
 import { BlameData } from "../shared/ipc";
 
 const GitPath = "git";
@@ -253,15 +253,15 @@ export function launchDiffTool(
 }
 
 export function getFileContentsAtRevision(
-  repoPath: string,
+  worktreePath: string,
   filePath: string,
   revision: string
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    const pathForCall = getGitRepoRelativePath(repoPath, filePath);
+    const pathForCall = getGitWorktreeRelativePath(worktreePath, filePath);
     exec(
       `${GitPath} show ${revision}:"${pathForCall}"`,
-      { cwd: repoPath },
+      { cwd: worktreePath },
       (error, stdout, stderr) => {
         if (error || stderr) {
           reject(error || stderr);

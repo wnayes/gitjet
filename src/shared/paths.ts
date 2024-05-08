@@ -46,20 +46,20 @@ export function getDirectory(path: string): string | null {
 }
 
 /**
- * Makes a file path relative to its repository.
+ * Makes a file path relative to its repository worktree.
  * For example, `"C:\A\repo\B\C\file.ts"` becomes `"B/C/file.ts"`
- * @param repoPath Repository path.
- * @param filePath File path.
- * @returns Repo-relative path.
+ * @param worktreePath Repository worktree path.
+ * @param filePath File path within the worktree.
+ * @returns Worktree-relative path.
  */
-export function getGitRepoRelativePath(
-  repoPath: string,
+export function getGitWorktreeRelativePath(
+  worktreePath: string,
   filePath: string
 ): string {
-  repoPath = removeGitFolderFromPath(normalizePath(repoPath));
+  worktreePath = normalizePath(worktreePath);
   filePath = normalizePath(filePath);
-  if (filePath.startsWith(repoPath)) {
-    filePath = filePath.substring(repoPath.length);
+  if (filePath.startsWith(worktreePath)) {
+    filePath = filePath.substring(worktreePath.length);
   }
   return removeLeadingSlashes(filePath);
 }
