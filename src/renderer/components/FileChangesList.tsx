@@ -4,7 +4,7 @@ import {
   GitFileChangeType,
   GitRevisionData,
   gitFileChangeEnumToTypeString,
-} from "../../../shared/GitTypes";
+} from "../../shared/GitTypes";
 
 interface IFileChangeRowProps {
   change: GitFileChange;
@@ -63,9 +63,13 @@ const FileChangeRow = ({
 
 interface IFileChangesListProps {
   revisionData: GitRevisionData;
+  worktreePath: string;
 }
 
-export const FileChangesList = ({ revisionData }: IFileChangesListProps) => {
+export const FileChangesList = ({
+  revisionData,
+  worktreePath,
+}: IFileChangesListProps) => {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
   const onRowClick = useCallback((change: GitFileChange) => {
@@ -74,7 +78,11 @@ export const FileChangesList = ({ revisionData }: IFileChangesListProps) => {
 
   const onRowDoubleClick = useCallback(
     (change: GitFileChange) => {
-      gitjet.launchDiffTool(revisionData.revision, change.path);
+      gitjetCommon.launchDiffTool(
+        revisionData.revision,
+        worktreePath,
+        change.path
+      );
     },
     [revisionData]
   );

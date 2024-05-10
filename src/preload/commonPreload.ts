@@ -13,6 +13,25 @@ const bridge: GitJetCommonBridge = {
         callback(choice);
       });
   },
+
+  showLogForCommit: (repoPath, worktreePath, filePath, commit) => {
+    ipcRenderer.send(
+      CommonIPCChannels.ShowLogForCommit,
+      repoPath,
+      worktreePath,
+      filePath,
+      commit
+    );
+  },
+
+  launchDiffTool: (revision, worktreePath, path) => {
+    ipcRenderer.send(
+      CommonIPCChannels.LaunchDiffTool,
+      revision,
+      worktreePath,
+      path
+    );
+  },
 };
 
 contextBridge.exposeInMainWorld("gitjetCommon", bridge);

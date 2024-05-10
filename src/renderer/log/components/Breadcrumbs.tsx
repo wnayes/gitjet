@@ -5,7 +5,7 @@ import {
   removeGitFolderFromPath,
   removeTrailingSlashes,
 } from "../../../shared/paths";
-import { HashAbbrLength } from "../constants";
+import { HashAbbrLength } from "../../../shared/constants";
 import { looksLikeCommitHash } from "../../../shared/GitTypes";
 
 interface IBreadcrumbProps {

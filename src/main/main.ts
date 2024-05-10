@@ -1,7 +1,7 @@
 import { app } from "electron";
 import { stat } from "node:fs/promises";
 import { isAbsolute, join, resolve } from "node:path";
-import { launchLogWindow } from "./log";
+import { initializeShowLogForCommit, launchLogWindow } from "./log";
 import {
   getCurrentBranch,
   getGitFolderPath,
@@ -12,6 +12,7 @@ import { getDirectory } from "../shared/paths";
 import { handleSquirrelSetup } from "./squirrel";
 import { launchBlameWindow } from "./blame";
 import { initializeContextMenuSupport } from "./ContextMenu";
+import { initializeLaunchDiffViewerSupport } from "./diff";
 
 // The Windows installer will run the main entrypoint.
 // When installing, we don't start the app; we add reg keys, etc.
@@ -27,6 +28,8 @@ app.whenReady().then(async () => {
   }
 
   initializeContextMenuSupport();
+  initializeLaunchDiffViewerSupport();
+  initializeShowLogForCommit();
 
   const mode = args[0];
   switch (mode) {

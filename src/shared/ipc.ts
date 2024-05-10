@@ -1,22 +1,41 @@
 import { IMenuItemOptions } from "./ContextMenu";
-import { GitRefMap, RevisionCountArgs, RevisionDataArgs } from "./GitTypes";
+import {
+  GitRefMap,
+  GitRevisionData,
+  RevisionCountArgs,
+  RevisionDataArgs,
+} from "./GitTypes";
 
 export interface GitJetCommonBridge {
   showContextMenu(
     menuItems: IMenuItemOptions[],
     callback: (choice: number) => void
   ): void;
+  showLogForCommit(
+    repoPath: string,
+    worktreePath: string,
+    filePath: string | null | undefined,
+    commit: string
+  ): void;
+  launchDiffTool(revision: string, worktreePath: string, path: string): void;
 }
 
 export enum CommonIPCChannels {
   ShowContextMenu = "ShowContextMenu",
+  ShowLogForCommit = "showLogForCommit",
+  LaunchDiffTool = "launchDiffTool",
 }
 
 export interface GitJetBlameBridge {
   blameOtherRevision(revision: string): void;
+  loadRevisionData(revision: string): void;
   ready(): void;
+  onReceiveRepositoryInfo(callback: (args: RepositoryInfoArgs) => void): void;
   onReceiveFileContents(callback: (contents: string) => void): void;
   onReceiveBlameData(callback: (blameData: BlameData[]) => void): void;
+  onReceiveRevisionData(
+    callback: (revisionData: GitRevisionData) => void
+  ): void;
 }
 
 export enum BlameIPCChannels {
@@ -24,6 +43,9 @@ export enum BlameIPCChannels {
   BlameFileContents = "blameFileContents",
   BlameData = "blameData",
   BlameOtherRevision = "blameOtherRevision",
+  BlameLoadRevisionData = "blameLoadRevisionData",
+  BlameRevisionData = "blameRevisionData",
+  BlameRepositoryInfo = "blameRepositoryInfo",
 }
 
 export interface BlameData {
@@ -52,7 +74,6 @@ interface RevisionUserInfo {
 
 export interface GitJetMain {
   ready(): void;
-  launchDiffTool(revision: string, path: string): void;
   onReceiveRepositoryInfo(callback: (args: RepositoryInfoArgs) => void): void;
   onReceiveRevisionCount(callback: (args: RevisionCountArgs) => void): void;
   onReceiveRevisionData(callback: (args: RevisionDataArgs) => void): void;
@@ -63,7 +84,6 @@ export interface GitJetMain {
   resumeSearch(): void;
   onSearchResults(callback: (results: SearchResultData) => void): void;
   onSearchProgress(callback: (progress: SearchProgressData) => void): void;
-  showLogForCommit(commit: string): void;
 }
 
 export interface RepositoryInfoArgs {
@@ -80,13 +100,11 @@ export enum IPCChannels {
   Revisions = "revisions",
   RevisionData = "revisionData",
   Refs = "refs",
-  LaunchDiffTool = "launchDiffTool",
   Search = "search",
   SearchPause = "searchPause",
   SearchResume = "searchResume",
   SearchProgress = "searchProgress",
   SearchResult = "searchResult",
-  ShowLogForCommit = "showLogForCommit",
 }
 
 export interface SearchResultData {

@@ -1,15 +1,19 @@
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { useRevisionData } from "../store";
+import { GitRevisionData } from "../../shared/GitTypes";
+import { HashAbbrLength } from "../../shared/constants";
 import { FileChangesList } from "./FileChangesList";
-import { GitRevisionData } from "../../../shared/GitTypes";
-import { HashAbbrLength } from "../constants";
 
 interface IRevisionDetailsProps {
-  revisionIndex: number;
+  revisionData: GitRevisionData | null | undefined;
+  worktreePath: string;
+  onCommitHashClick(commitHash: string): void;
 }
 
-export const RevisionDetails = ({ revisionIndex }: IRevisionDetailsProps) => {
-  const revisionData = useRevisionData(revisionIndex);
+export const RevisionDetails = ({
+  revisionData,
+  worktreePath,
+  onCommitHashClick,
+}: IRevisionDetailsProps) => {
   if (!revisionData) {
     return null;
   }
@@ -19,7 +23,10 @@ export const RevisionDetails = ({ revisionIndex }: IRevisionDetailsProps) => {
       <PanelGroup direction="vertical">
         <Panel minSize={5} defaultSize={40}>
           <div className="messageDisplay">
-            <MergeCommitInfo revisionData={revisionData} />
+            <MergeCommitInfo
+              revisionData={revisionData}
+              onClick={onCommitHashClick}
+            />
             {revisionData.subject}
             {"\n\n"}
             {revisionData.body}
@@ -27,20 +34,28 @@ export const RevisionDetails = ({ revisionIndex }: IRevisionDetailsProps) => {
         </Panel>
         <PanelResizeHandle className="panelResizer" style={{ height: 2 }} />
         <Panel minSize={5}>
-          <FileChangesList revisionData={revisionData} />
+          <FileChangesList
+            revisionData={revisionData}
+            worktreePath={worktreePath}
+          />
         </Panel>
       </PanelGroup>
     </>
   );
 };
 
-function ParentHashLogLink({ commitHash }: { commitHash: string }) {
+interface IParentHashLogLinkProps {
+  commitHash: string;
+  onClick(commitHash: string): void;
+}
+
+function ParentHashLogLink({ commitHash, onClick }: IParentHashLogLinkProps) {
   return (
     <a
       className="link"
       onClick={(e) => {
         e.preventDefault();
-        gitjet.showLogForCommit(commitHash);
+        onClick(commitHash);
       }}
     >
       {commitHash.substring(0, HashAbbrLength)}
@@ -48,7 +63,12 @@ function ParentHashLogLink({ commitHash }: { commitHash: string }) {
   );
 }
 
-function MergeCommitInfo({ revisionData }: { revisionData: GitRevisionData }) {
+interface IMergeCommitInfoProps {
+  revisionData: GitRevisionData;
+  onClick(commitHash: string): void;
+}
+
+function MergeCommitInfo({ revisionData, onClick }: IMergeCommitInfoProps) {
   if (!revisionData.parents || revisionData.parents.length <= 1) {
     return null;
   }
@@ -60,7 +80,7 @@ function MergeCommitInfo({ revisionData }: { revisionData: GitRevisionData }) {
         .slice(1)
         .map((hash, i) => [
           i > 0 && ", ",
-          <ParentHashLogLink commitHash={hash} />,
+          <ParentHashLogLink commitHash={hash} onClick={onClick} />,
         ])}
     </div>
   );

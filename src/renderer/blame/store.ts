@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { BlameData, RevisionShortData } from "../../shared/ipc";
+import { GitRevisionData } from "../../shared/GitTypes";
 
 export interface BlameState {
   repository: string;
@@ -9,6 +10,7 @@ export interface BlameState {
   fileContents: string[];
   revisionsByLine: string[];
   revisionShortData: { [revision: string]: RevisionShortData };
+  revisionData: { [revision: string]: GitRevisionData };
   previousRevisions: { [revision: string]: string | undefined };
   hoveredRevision: string;
   selectedRevision: string;
@@ -20,6 +22,7 @@ export interface BlameState {
   setSelectedRevision(revision: string): void;
   setFileContents(fileContents: string[]): void;
   applyBlameData(blameData: BlameData[]): void;
+  addRevisionData(revisionData: GitRevisionData): void;
 }
 
 export const useBlameStore = create<BlameState>((set) => ({
@@ -30,6 +33,7 @@ export const useBlameStore = create<BlameState>((set) => ({
   fileContents: [],
   revisionsByLine: [],
   revisionShortData: {},
+  revisionData: {},
   previousRevisions: {},
   hoveredRevision: "",
   selectedRevision: "",
@@ -81,4 +85,27 @@ export const useBlameStore = create<BlameState>((set) => ({
         previousRevisions: previousRevisions ?? state.previousRevisions,
       };
     }),
+
+  addRevisionData: (revisionData) =>
+    set((state) => {
+      return {
+        revisionData: {
+          ...state.revisionData,
+          [revisionData.revision]: revisionData,
+        },
+      };
+    }),
 }));
+
+export function useRevisionData(
+  revision: string
+): GitRevisionData | null | undefined {
+  return useBlameStore((state) => {
+    const data = state.revisionData[revision];
+    if (!data) {
+      // We don't have it in the renderer; request that it be sent.
+      gitjetBlame.loadRevisionData(revision);
+    }
+    return data;
+  });
+}

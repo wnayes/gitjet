@@ -1,7 +1,8 @@
 import { BrowserWindow, WebContents, ipcMain } from "electron";
 import path from "node:path";
 import { getFileContentsAtRevision, loadBlameData } from "./git";
-import { BlameData, BlameIPCChannels } from "../shared/ipc";
+import { BlameData, BlameIPCChannels, RepositoryInfoArgs } from "../shared/ipc";
+import { getRevisionDataCache } from "./RevisionDataCache";
 
 declare global {
   const BLAME_WINDOW_VITE_DEV_SERVER_URL: string;
@@ -10,6 +11,7 @@ declare global {
 
 interface BlameWindow {
   onBlameOtherRevision(revision: string): void;
+  onLoadRevisionData(revision: string): void;
   onReady(): void;
 }
 
@@ -21,6 +23,16 @@ ipcMain.on(
     const win = _blameWindows.get(e.sender);
     if (win) {
       win.onBlameOtherRevision(revision);
+    }
+  }
+);
+
+ipcMain.on(
+  BlameIPCChannels.BlameLoadRevisionData,
+  (e: Electron.IpcMainInvokeEvent, revision: string) => {
+    const win = _blameWindows.get(e.sender);
+    if (win) {
+      win.onLoadRevisionData(revision);
     }
   }
 );
@@ -101,6 +113,17 @@ export function launchBlameWindow(
 
     ready = true;
 
+    const repositoryInfo: RepositoryInfoArgs = {
+      repository: repoPath,
+      worktree: worktreePath,
+      filePath,
+      branch: "",
+    };
+    blameWindow.webContents.send(
+      BlameIPCChannels.BlameRepositoryInfo,
+      repositoryInfo
+    );
+
     if (typeof fileContents === "string") {
       blameWindow.webContents.send(
         BlameIPCChannels.BlameFileContents,
@@ -118,9 +141,16 @@ export function launchBlameWindow(
     launchBlameWindow(repoPath, worktreePath, filePath, revision);
   };
 
+  const onLoadRevisionData = async (revision: string) => {
+    const revDataCache = getRevisionDataCache(repoPath);
+    const data = await revDataCache.loadRevisionData(revision);
+    blameWindow.webContents.send(BlameIPCChannels.BlameRevisionData, data);
+  };
+
   const { webContents } = blameWindow;
   _blameWindows.set(webContents, {
     onBlameOtherRevision,
+    onLoadRevisionData,
     onReady,
   });
 

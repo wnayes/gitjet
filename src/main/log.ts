@@ -1,8 +1,9 @@
 import { BrowserWindow, WebContents, ipcMain } from "electron";
 import path from "node:path";
-import { getGitReferences, getNullObjectHash, launchDiffTool } from "./git";
+import { getGitReferences } from "./git";
 import { ISearchInstance, LogDataCache } from "./LogDataCache";
 import {
+  CommonIPCChannels,
   IPCChannels,
   RepositoryInfoArgs,
   SearchProgressData,
@@ -24,8 +25,6 @@ interface LogWindow {
   onSearch(searchText: string): void;
   onSearchPause(): void;
   onSearchResume(): void;
-  onLaunchDiffTool(revision: string, path: string): void;
-  onShowLogForCommit(commit: string): void;
 }
 
 const _logWindows: Map<WebContents, LogWindow> = new Map();
@@ -71,25 +70,20 @@ ipcMain.on(IPCChannels.SearchResume, (e: Electron.IpcMainInvokeEvent) => {
   }
 });
 
-ipcMain.on(
-  IPCChannels.LaunchDiffTool,
-  (e: Electron.IpcMainInvokeEvent, revision: string, path: string) => {
-    const win = _logWindows.get(e.sender);
-    if (win) {
-      win.onLaunchDiffTool(revision, path);
+export function initializeShowLogForCommit(): void {
+  ipcMain.on(
+    CommonIPCChannels.ShowLogForCommit,
+    (
+      e: Electron.IpcMainInvokeEvent,
+      repoPath: string,
+      worktreePath: string,
+      filePath: string,
+      commit: string
+    ) => {
+      launchLogWindow(repoPath, worktreePath, filePath, commit);
     }
-  }
-);
-
-ipcMain.on(
-  IPCChannels.ShowLogForCommit,
-  (e: Electron.IpcMainInvokeEvent, commit: string) => {
-    const win = _logWindows.get(e.sender);
-    if (win) {
-      win.onShowLogForCommit(commit);
-    }
-  }
-);
+  );
+}
 
 export function launchLogWindow(
   repoPath: string,
@@ -215,23 +209,6 @@ export function launchLogWindow(
     }
   };
 
-  const onLaunchDiffTool = async (revision: string, path: string) => {
-    if (
-      logDataCache.getRevisionAtIndex(logDataCache.getRevisionCount() - 1) ===
-      revision
-    ) {
-      // We need to use special arguments for the very first revision diff.
-      const nullHash = await getNullObjectHash(worktreePath);
-      launchDiffTool(worktreePath, nullHash, revision, path);
-    } else {
-      launchDiffTool(worktreePath, null, revision, path);
-    }
-  };
-
-  const onShowLogForCommit = (commit: string) => {
-    launchLogWindow(repoPath, worktreePath, filePath, commit);
-  };
-
   const { webContents } = mainWindow;
   _logWindows.set(webContents, {
     onReady,
@@ -239,8 +216,6 @@ export function launchLogWindow(
     onSearch,
     onSearchPause,
     onSearchResume,
-    onLaunchDiffTool,
-    onShowLogForCommit,
   });
 
   mainWindow.on("closed", () => {

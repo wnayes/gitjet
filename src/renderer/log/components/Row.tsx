@@ -1,12 +1,9 @@
 import { memo, useMemo } from "react";
 import { ListChildComponentProps } from "react-window";
 import { useGitStore, useRevisionData } from "../store";
-import {
-  HashAbbrLength,
-  getColumnWidthStyle,
-  useColumnWidths,
-} from "../constants";
+import { getColumnWidthStyle, useColumnWidths } from "../constants";
 import { GitRevisionData, gitRefDisplayValue } from "../../../shared/GitTypes";
+import { HashAbbrLength } from "../../../shared/constants";
 
 const CommitHash = ({ hash }: { hash: string }) => {
   return <span className="hash">{hash.substring(0, HashAbbrLength)}</span>;

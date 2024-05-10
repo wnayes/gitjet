@@ -5,7 +5,7 @@ import { TableHeader } from "./TableHeader";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { DataList } from "./DataList";
-import { RevisionDetails } from "./RevisionDetails";
+import { LogRevisionDetails } from "./LogRevisionDetails";
 import { SearchBox } from "./SearchBox";
 
 function useElectronCommunication(): void {
@@ -61,7 +61,7 @@ export const App = () => {
           <>
             <PanelResizeHandle className="panelResizer" style={{ height: 4 }} />
             <Panel maxSize={75}>
-              <RevisionDetails revisionIndex={selectedRevision} />
+              <LogRevisionDetails revisionIndex={selectedRevision} />
             </Panel>
           </>
         )}

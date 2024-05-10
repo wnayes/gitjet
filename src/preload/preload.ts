@@ -13,10 +13,6 @@ ipcRenderer.addListener(IPCChannels.RevisionData, (src, args) => {
 const bridge: GitJetMain = {
   ready: () => ipcRenderer.send(IPCChannels.Ready),
 
-  launchDiffTool: (revision, path) => {
-    ipcRenderer.send(IPCChannels.LaunchDiffTool, revision, path);
-  },
-
   onReceiveRepositoryInfo: (callback) => {
     ipcRenderer.addListener(IPCChannels.RepositoryInfo, (src, args) =>
       callback(args)
@@ -72,10 +68,6 @@ const bridge: GitJetMain = {
     ipcRenderer.addListener(IPCChannels.SearchProgress, (src, args) => {
       callback(args);
     });
-  },
-
-  showLogForCommit: (commit) => {
-    ipcRenderer.send(IPCChannels.ShowLogForCommit, commit);
   },
 };
 

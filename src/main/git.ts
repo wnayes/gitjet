@@ -227,6 +227,25 @@ export function loadRevisionData(
   });
 }
 
+export function getParentRevision(
+  worktreePath: string,
+  revision: string
+): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    exec(
+      `${GitPath} rev-parse ${revision}^1`,
+      { cwd: worktreePath },
+      (error, stdout, stderr) => {
+        if (error || stderr) {
+          resolve(undefined);
+        } else {
+          resolve(stdout);
+        }
+      }
+    );
+  });
+}
+
 export function launchDiffTool(
   repoPath: string,
   fromRevision: string | null,

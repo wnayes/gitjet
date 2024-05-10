@@ -1,0 +1,87 @@
+:root {
+    --secondary-color: rgb(197, 197, 197);
+    --resizer-color: rgb(193, 193, 193);
+    --resizer-hover-color: rgb(161, 161, 161);
+    --row-hover-bg-color: rgb(209, 209, 209);
+    --row-selected-bg-color: rgb(167, 214, 223);
+    --row-body-text-color: rgb(83, 83, 83);
+    --link-color: rgb(5, 67, 92);
+}
+
+.hash {
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.link {
+    color: var(--link-color);
+}
+.link:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+
+.mergeCommitInfo {
+    font-size: 11px;
+}
+
+.messageBody {
+    color: var(--row-body-text-color);
+}
+
+.panelResizer {
+    background-color: var(--resizer-color);
+}
+.panelResizer:hover {
+    background-color: var(--resizer-hover-color);
+}
+
+.revisionDataContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.messageDisplay {
+    overflow: auto;
+    white-space: pre-wrap;
+    font-family: 'Courier New', Courier, monospace;
+    height: 100%;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.fileChangesList {
+    overflow: auto;
+    white-space: pre-wrap;
+    height: 100%;
+    user-select: none;
+}
+
+.fileChangeRow {
+    padding: 2px 4px;
+    font-size: 14px;
+    cursor: default;
+    display: flex;
+}
+.fileChangeRow.selected {
+    background-color: var(--row-selected-bg-color);
+}
+.fileChangeRow:not(.selected):hover {
+    background-color: var(--row-hover-bg-color);
+}
+
+.fileChangeType {
+    display: inline-block;
+    width: 16px;
+    flex-shrink: 0;
+}
+.fileChangeType.add {
+    color: purple;
+}
+.fileChangeType.delete {
+    color: rgb(84, 0, 0);
+}
+.fileChangeType.modify, .fileChangeType.rename {
+    color: blue;
+}
