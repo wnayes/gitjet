@@ -102,7 +102,7 @@ function Row({ index, style }: ListChildComponentProps<string[]>) {
     if (rowSelected) {
       setHoveredRevision("");
     } else {
-      setHoveredRevision(rowRevision);
+      setHoveredRevision(rowRevision || "");
     }
   }, [rowSelected, rowRevision, setHoveredRevision]);
   const onMouseLeave = useCallback(() => {
