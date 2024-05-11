@@ -137,7 +137,7 @@ function Row({ index, style }: ListChildComponentProps<string[]>) {
     >
       <span className="blameLineMetadata">
         <span className="blameFileLineAuthor">
-          {rowRevShortData?.author?.email?.substring(1)}
+          {formatEmail(rowRevShortData?.author?.email)}
         </span>
         <span className="blameFileLineDate">{date?.toLocaleDateString()}</span>
         <span
@@ -150,6 +150,16 @@ function Row({ index, style }: ListChildComponentProps<string[]>) {
       <span className="blameLineContent">{fileContents[index]}</span>
     </div>
   );
+}
+
+function formatEmail(email: string | null | undefined): string {
+  if (!email) {
+    return "";
+  }
+  if (email.startsWith("<") && email.endsWith(">")) {
+    return email.substring(1, email.length - 1);
+  }
+  return email;
 }
 
 function getRevisionFromMouseEvent(event: MouseEvent): string | null {
