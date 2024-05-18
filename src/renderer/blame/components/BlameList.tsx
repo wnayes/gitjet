@@ -82,6 +82,11 @@ export const BlameList = () => {
   );
 };
 
+const DateToday = Date.now();
+const TwoDaysDurationMs = 172800000;
+const OneWeekDurationMs = 604800000;
+const OneMonthDurationMs = 2592000000;
+
 function Row({ index, style }: ListChildComponentProps<string[]>) {
   const fileContents = useBlameStore((state) => state.fileContents);
   const rowRevision: string | undefined = useBlameStore(
@@ -126,6 +131,19 @@ function Row({ index, style }: ListChildComponentProps<string[]>) {
     rowClasses += " hovered";
   }
 
+  let lineNumberClasses = "blameFileLineNumber";
+  const dateRow = date?.getTime();
+  if (dateRow) {
+    const dateDiff = DateToday - dateRow;
+    if (dateDiff < TwoDaysDurationMs) {
+      lineNumberClasses += " hottest";
+    } else if (dateDiff < OneWeekDurationMs) {
+      lineNumberClasses += " hotter";
+    } else if (dateDiff < OneMonthDurationMs) {
+      lineNumberClasses += " hot";
+    }
+  }
+
   return (
     <div
       className={rowClasses}
@@ -141,7 +159,7 @@ function Row({ index, style }: ListChildComponentProps<string[]>) {
         </span>
         <span className="blameFileLineDate">{date?.toLocaleDateString()}</span>
         <span
-          className="blameFileLineNumber"
+          className={lineNumberClasses}
           style={{ width: getLineNumberColWidth(fileContents.length) }}
         >
           {index + 1}

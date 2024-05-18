@@ -1,6 +1,11 @@
 :root {
     --blame-row-hover-bg-color: rgb(212, 235, 242);
     --blame-row-selected-bg-color: rgb(139, 186, 194);
+    --blame-row-line-num-col-bg-color: rgb(224, 224, 224);
+    --blame-row-line-num-col-hottest-bg-color: rgb(141, 0, 0);
+    --blame-row-line-num-col-hottest-color: rgb(240, 240, 240);
+    --blame-row-line-num-col-hotter-bg-color: rgb(200, 82, 82);
+    --blame-row-line-num-col-hot-bg-color: rgb(250, 155, 155);
 }
 
 html, body, #root {
@@ -34,7 +39,17 @@ html, body, #root {
     height: 100%;
     text-align: right;
     padding-right: 2px;
-    background-color: var(--secondary-color);
+    background-color: var(--blame-row-line-num-col-bg-color);
+}
+.blameFileLineNumber.hottest {
+    background-color: var(--blame-row-line-num-col-hottest-bg-color);
+    color: var(--blame-row-line-num-col-hottest-color);
+}
+.blameFileLineNumber.hotter {
+    background-color: var(--blame-row-line-num-col-hotter-bg-color);
+}
+.blameFileLineNumber.hot {
+    background-color: var(--blame-row-line-num-col-hot-bg-color);
 }
 
 .blameLineMetadata {
