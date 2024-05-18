@@ -8,6 +8,7 @@ export const App = () => {
   const setRepository = useBlameStore((state) => state.setRepository);
   const setWorktree = useBlameStore((state) => state.setWorktree);
   const setFilePath = useBlameStore((state) => state.setFilePath);
+  const setOptions = useBlameStore((state) => state.setOptions);
   const setFileContents = useBlameStore((state) => state.setFileContents);
   const applyBlameData = useBlameStore((state) => state.applyBlameData);
   const addRevisionData = useBlameStore((state) => state.addRevisionData);
@@ -17,6 +18,9 @@ export const App = () => {
       setRepository(args.repository);
       setWorktree(args.worktree);
       setFilePath(args.filePath!);
+    });
+    gitjetBlame.onReceiveBlameOptions((options) => {
+      setOptions(options);
     });
     gitjetBlame.onReceiveFileContents((content) => {
       const fileLines = content.split("\n");

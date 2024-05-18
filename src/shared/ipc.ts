@@ -31,6 +31,7 @@ export interface GitJetBlameBridge {
   loadRevisionData(revision: string): void;
   ready(): void;
   onReceiveRepositoryInfo(callback: (args: RepositoryInfoArgs) => void): void;
+  onReceiveBlameOptions(callback: (args: BlameOptions) => void): void;
   onReceiveFileContents(callback: (contents: string) => void): void;
   onReceiveBlameData(callback: (blameData: BlameData[]) => void): void;
   onReceiveRevisionData(
@@ -46,6 +47,7 @@ export enum BlameIPCChannels {
   BlameLoadRevisionData = "blameLoadRevisionData",
   BlameRevisionData = "blameRevisionData",
   BlameRepositoryInfo = "blameRepositoryInfo",
+  BlameOptions = "blameOptions",
 }
 
 export interface BlameData {
@@ -57,6 +59,10 @@ export interface BlameData {
   /** The line number of the line in the final file */
   resultLine: number;
   numLines: number;
+}
+
+export interface BlameOptions {
+  startingLine?: number;
 }
 
 export interface RevisionShortData {

@@ -1,7 +1,12 @@
 import { BrowserWindow, WebContents, ipcMain } from "electron";
 import path from "node:path";
 import { getFileContentsAtRevision, loadBlameData } from "./git";
-import { BlameData, BlameIPCChannels, RepositoryInfoArgs } from "../shared/ipc";
+import {
+  BlameData,
+  BlameIPCChannels,
+  BlameOptions,
+  RepositoryInfoArgs,
+} from "../shared/ipc";
 import { getRevisionDataCache } from "./RevisionDataCache";
 
 declare global {
@@ -47,12 +52,17 @@ ipcMain.on(
   }
 );
 
-export function launchBlameWindow(
-  repoPath: string,
-  worktreePath: string,
-  filePath: string,
-  revision: string | null | undefined
-): void {
+interface ILaunchBlameWindowProps {
+  repoPath: string;
+  worktreePath: string;
+  filePath: string;
+  revision: string | null | undefined;
+  startingLine?: number;
+}
+
+export function launchBlameWindow(props: ILaunchBlameWindowProps): void {
+  const { repoPath, worktreePath, filePath, revision, startingLine } = props;
+
   const blameWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -106,11 +116,7 @@ export function launchBlameWindow(
   });
 
   const onReady = () => {
-    // A reload of the browser, send all blame data again.
-    if (ready) {
-      blameWindow.webContents.send(BlameIPCChannels.BlameData, allBlameData);
-    }
-
+    const wasReady = ready;
     ready = true;
 
     const repositoryInfo: RepositoryInfoArgs = {
@@ -124,11 +130,21 @@ export function launchBlameWindow(
       repositoryInfo
     );
 
+    const options: BlameOptions = {
+      startingLine,
+    };
+    blameWindow.webContents.send(BlameIPCChannels.BlameOptions, options);
+
     if (typeof fileContents === "string") {
       blameWindow.webContents.send(
         BlameIPCChannels.BlameFileContents,
         fileContents
       );
+    }
+
+    // A reload of the browser, send all blame data again.
+    if (wasReady) {
+      blameWindow.webContents.send(BlameIPCChannels.BlameData, allBlameData);
     }
 
     if (blameDataToSend.length > 0) {
@@ -138,7 +154,7 @@ export function launchBlameWindow(
   };
 
   const onBlameOtherRevision = (revision: string) => {
-    launchBlameWindow(repoPath, worktreePath, filePath, revision);
+    launchBlameWindow({ repoPath, worktreePath, filePath, revision });
   };
 
   const onLoadRevisionData = async (revision: string) => {

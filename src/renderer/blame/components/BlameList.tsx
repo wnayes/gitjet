@@ -16,6 +16,12 @@ export const BlameList = () => {
     (state) => state.setSelectedRevision
   );
 
+  const hasAppliedStartingLine = useRef<boolean>(false);
+  const initialStartingLine = useBlameStore(
+    (store) => store.options.startingLine ?? 1
+  );
+
+  const listRef = useRef<List<string[]> | null>(null);
   const listContainerElRef = useRef<HTMLDivElement>(null);
 
   const onListElementClicked = useCallback(
@@ -63,6 +69,17 @@ export const BlameList = () => {
     }
   });
 
+  useEffect(() => {
+    if (
+      !hasAppliedStartingLine.current &&
+      fileContents.length &&
+      initialStartingLine > 1
+    ) {
+      hasAppliedStartingLine.current = true;
+      listRef.current?.scrollToItem(initialStartingLine - 1, "center");
+    }
+  }, [fileContents, initialStartingLine]);
+
   return (
     <AutoSizer>
       {({ height, width }) => {
@@ -72,6 +89,7 @@ export const BlameList = () => {
             itemCount={fileContents.length}
             itemSize={18}
             width={width}
+            ref={listRef}
             outerRef={listContainerElRef}
           >
             {Row}

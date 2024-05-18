@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import {
   BlameData,
   BlameIPCChannels,
+  BlameOptions,
   RepositoryInfoArgs,
   type GitJetBlameBridge,
 } from "../shared/ipc";
@@ -28,6 +29,12 @@ const bridge: GitJetBlameBridge = {
         callback(repositoryInfo);
       }
     );
+  },
+
+  onReceiveBlameOptions(callback: (options: BlameOptions) => void): void {
+    ipcRenderer.addListener(BlameIPCChannels.BlameOptions, (src, options) => {
+      callback(options);
+    });
   },
 
   onReceiveFileContents(callback: (contents: string) => void): void {

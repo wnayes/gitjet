@@ -54,19 +54,40 @@ app.on("window-all-closed", () => {
 async function startBlameMode(args: string[]): Promise<void> {
   let filePath: string;
   let revision: string | null = null;
+  let startingLine = 1;
 
   if (args.length === 0) {
     console.error("One or more blame arguments must be passed, exiting.");
     process.exit(1);
   }
 
-  if (args.length === 1) {
-    // Only parameter is a file path.
-    filePath = args[0];
-  } else if (args.length === 2) {
+  let foundOptionalParam: boolean;
+  do {
+    foundOptionalParam = false;
+
+    if (args[args.length - 2] === "-L") {
+      const lineArg = parseInt(args[args.length - 1], 10);
+      if (Number.isNaN(lineArg)) {
+        console.error(
+          `Unrecognized command line parameter: -L ${args[args.length - 1]}`
+        );
+        startingLine = 1;
+      } else {
+        startingLine = lineArg;
+      }
+      args.pop();
+      args.pop();
+      foundOptionalParam = true;
+    }
+  } while (foundOptionalParam);
+
+  if (args.length === 2) {
     // <revision> <filepath>
     revision = args[0];
     filePath = args[1];
+  } else if (args.length === 1) {
+    // Only parameter is a file path.
+    filePath = args[0];
   } else {
     console.error(`Unrecognized command line arguments, exiting.`);
     process.exit(1);
@@ -91,7 +112,13 @@ async function startBlameMode(args: string[]): Promise<void> {
   const worktreePath = await getWorkingCopyRoot(fileDirectory);
   const repoPath = await getGitFolderPath(worktreePath);
 
-  launchBlameWindow(repoPath, worktreePath, filePath, revision);
+  launchBlameWindow({
+    repoPath,
+    worktreePath,
+    filePath,
+    revision,
+    startingLine,
+  });
 }
 
 async function startLogMode(args: string[]): Promise<void> {

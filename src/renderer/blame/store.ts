@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { BlameData, RevisionShortData } from "../../shared/ipc";
+import { BlameData, BlameOptions, RevisionShortData } from "../../shared/ipc";
 import { GitRevisionData } from "../../shared/GitTypes";
 
 export interface BlameState {
@@ -7,6 +7,7 @@ export interface BlameState {
   worktree: string;
   filePath: string;
   revision: string;
+  options: BlameOptions;
   fileContents: string[];
   revisionsByLine: string[];
   revisionShortData: { [revision: string]: RevisionShortData };
@@ -18,6 +19,7 @@ export interface BlameState {
   setWorktree(worktree: string): void;
   setFilePath(filePath: string): void;
   setRevision(branch: string): void;
+  setOptions(options: Partial<BlameOptions>): void;
   setHoveredRevision(revision: string): void;
   setSelectedRevision(revision: string): void;
   setFileContents(fileContents: string[]): void;
@@ -30,6 +32,7 @@ export const useBlameStore = create<BlameState>((set) => ({
   worktree: "",
   filePath: "",
   revision: "",
+  options: {},
   fileContents: [],
   revisionsByLine: [],
   revisionShortData: {},
@@ -42,6 +45,10 @@ export const useBlameStore = create<BlameState>((set) => ({
   setWorktree: (worktree) => set(() => ({ worktree })),
   setFilePath: (filePath) => set(() => ({ filePath })),
   setRevision: (revision) => set(() => ({ revision })),
+  setOptions: (nextOptions) =>
+    set((state) => {
+      return { options: { ...state.options, ...nextOptions } };
+    }),
   setHoveredRevision: (hoveredRevision) => set(() => ({ hoveredRevision })),
   setSelectedRevision: (selectedRevision) => set(() => ({ selectedRevision })),
   setFileContents: (fileContents) =>

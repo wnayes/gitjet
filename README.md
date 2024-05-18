@@ -32,6 +32,9 @@ A simple blame viewer. Currently takes data directly from
     # Blame a file starting at a revision
     gitjet blame [revision] [filepath]
 
+    # Blame with a focus on a given line (1-based index)
+    gitjet blame [filepath] -L 123
+
 ## License
 
 [MIT](LICENSE.md)
