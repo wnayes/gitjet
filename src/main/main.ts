@@ -65,18 +65,15 @@ async function startBlameMode(args: string[]): Promise<void> {
   do {
     foundOptionalParam = false;
 
-    if (args[args.length - 2] === "-L") {
-      const lineArg = parseInt(args[args.length - 1], 10);
+    if (args[0] === "-L") {
+      const lineArg = parseInt(args[1], 10);
       if (Number.isNaN(lineArg)) {
-        console.error(
-          `Unrecognized command line parameter: -L ${args[args.length - 1]}`
-        );
+        console.error(`Unrecognized command line parameter: -L ${args[1]}`);
         startingLine = 1;
       } else {
         startingLine = lineArg;
       }
-      args.pop();
-      args.pop();
+      args = args.slice(2);
       foundOptionalParam = true;
     }
   } while (foundOptionalParam);

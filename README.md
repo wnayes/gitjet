@@ -33,7 +33,7 @@ A simple blame viewer. Currently takes data directly from
     gitjet blame [revision] [filepath]
 
     # Blame with a focus on a given line (1-based index)
-    gitjet blame [filepath] -L 123
+    gitjet blame -L 123 [filepath]
 
 ## License
 
