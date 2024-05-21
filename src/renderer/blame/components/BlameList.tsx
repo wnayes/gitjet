@@ -1,112 +1,160 @@
-import { FixedSizeList as List, ListChildComponentProps } from "react-window";
-import AutoSizer from "react-virtualized-auto-sizer";
 import { useBlameStore } from "../store";
 import { RevisionShortData } from "../../../shared/ipc";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { gitTimeAndTzToDate } from "../../../shared/GitTypes";
 import {
   ContextMenu,
   ContextMenuItem,
   showContextMenu,
 } from "../../components/ContextMenu";
+import { basicSetup, EditorView } from "codemirror";
+import { gutter, GutterMarker } from "@codemirror/view";
+import { Compartment, Text, EditorState } from "@codemirror/state";
+import { languages } from "@codemirror/language-data";
+import { LanguageDescription, LanguageSupport } from "@codemirror/language";
+import { Root, createRoot } from "react-dom/client";
 
 export const BlameList = () => {
+  const fileName = useBlameStore((state) => state.filePath);
   const fileContents = useBlameStore((state) => state.fileContents);
-  const setSelectedRevision = useBlameStore(
-    (state) => state.setSelectedRevision
-  );
 
-  const hasAppliedStartingLine = useRef<boolean>(false);
   const initialStartingLine = useBlameStore(
     (store) => store.options.startingLine ?? 1
   );
 
-  const listRef = useRef<List<string[]> | null>(null);
-  const listContainerElRef = useRef<HTMLDivElement>(null);
+  const divRef = useRef<HTMLDivElement>(null);
+  const [editorView, setEditorView] = useState<EditorView | null>(null);
 
-  const onListElementClicked = useCallback(
-    (event: MouseEvent) => {
-      const revision = getRevisionFromMouseEvent(event);
-      if (revision) {
-        setSelectedRevision(revision);
-      }
-    },
-    [setSelectedRevision]
-  );
-
-  const onListElementContextMenu = useCallback((event: MouseEvent) => {
-    const revision = getRevisionFromMouseEvent(event);
-    if (revision) {
-      const previousRevision =
-        useBlameStore.getState().previousRevisions[revision];
-      showContextMenu(
-        <ContextMenu>
-          {previousRevision && (
-            <ContextMenuItem
-              label="Blame previous revision"
-              onClick={() => {
-                gitjetBlame.blameOtherRevision(previousRevision);
-              }}
-            />
-          )}
-        </ContextMenu>
-      );
+  const langDescription = useCodeMirrorLanguage(fileName);
+  const [langCompartment] = useState(() => new Compartment());
+  const currentLangSupport = useRef<LanguageSupport | null>(null);
+  const [langSupport, setLangSupport] = useState<LanguageSupport | null>(null);
+  useEffect(() => {
+    if (langDescription) {
+      langDescription.load().then((langSupport) => {
+        setLangSupport(langSupport);
+      });
     }
-  }, []);
+  }, [langDescription]);
 
   useEffect(() => {
-    const containerEl = listContainerElRef.current;
-    if (containerEl) {
-      containerEl.addEventListener("click", onListElementClicked);
-      containerEl.addEventListener("contextmenu", onListElementContextMenu);
-      return () => {
-        containerEl.removeEventListener("click", onListElementClicked);
-        containerEl.removeEventListener(
-          "contextmenu",
-          onListElementContextMenu
-        );
-      };
+    if (!divRef.current || !fileContents.length) {
+      return;
     }
-  });
 
-  useEffect(() => {
-    if (
-      !hasAppliedStartingLine.current &&
-      fileContents.length &&
+    const doc = Text.of(fileContents);
+
+    const scrollTo =
       initialStartingLine > 1
-    ) {
-      hasAppliedStartingLine.current = true;
-      listRef.current?.scrollToItem(initialStartingLine - 1, "center");
-    }
-  }, [fileContents, initialStartingLine]);
+        ? EditorView.scrollIntoView(doc.line(initialStartingLine).from, {
+            y: "center",
+          })
+        : undefined;
 
-  return (
-    <AutoSizer>
-      {({ height, width }) => {
-        return (
-          <List
-            height={height}
-            itemCount={fileContents.length}
-            itemSize={18}
-            width={width}
-            ref={listRef}
-            outerRef={listContainerElRef}
-          >
-            {Row}
-          </List>
-        );
-      }}
-    </AutoSizer>
-  );
+    const langCompartmentValue = langSupport ? [langSupport] : [];
+    currentLangSupport.current = langSupport;
+
+    const view = new EditorView({
+      doc,
+      extensions: [
+        gutter({
+          class: "blameGutter",
+          lineMarker: (view, line) => {
+            const index = view.state.doc.lineAt(line.from).number - 1;
+            return new BlameLineGutterMarker(index);
+          },
+          initialSpacer: () => SpacerGutterMarker.Instance,
+        }),
+        basicSetup,
+        EditorState.readOnly.of(true),
+        langCompartment.of(langCompartmentValue),
+      ],
+      scrollTo,
+      parent: divRef.current,
+    });
+    setEditorView(view);
+
+    return () => {
+      view.destroy();
+      setEditorView(null);
+    };
+  }, [fileContents, langCompartment]); // Not putting langSupport here to avoid re-creating editor.
+
+  useEffect(() => {
+    if (editorView && langSupport) {
+      editorView.dispatch({
+        effects: [langCompartment.reconfigure(langSupport.extension)],
+      });
+    }
+  }, [editorView, langSupport]);
+
+  return <div className="blameList" ref={divRef} />;
 };
+
+/**
+ * Choose a CodeMirror language based on the file name.
+ * TODO: Consider best matching extension? Is there some existing API for this?
+ */
+function useCodeMirrorLanguage(fileName: string): LanguageDescription | null {
+  if (!fileName) {
+    return null;
+  }
+  return (
+    languages.find((lang) =>
+      lang.extensions.some((ext) => fileName.endsWith(ext))
+    ) ?? null
+  );
+}
+
+class BlameLineGutterMarker extends GutterMarker {
+  public index: number;
+  private _reactRoot: Root | undefined;
+
+  public constructor(index: number) {
+    super();
+    this.index = index;
+  }
+
+  public eq(other: GutterMarker): boolean {
+    return other instanceof BlameLineGutterMarker && other.index === this.index;
+  }
+
+  public toDOM?(_view: EditorView): Node {
+    const outerEl = document.createElement("span");
+    this._reactRoot = createRoot(outerEl);
+    this._reactRoot.render(<BlameGutterRow index={this.index} />);
+    return outerEl;
+  }
+
+  destroy(_dom: Node): void {
+    this._reactRoot?.unmount();
+  }
+}
+
+class SpacerGutterMarker extends GutterMarker {
+  public static Instance = new SpacerGutterMarker();
+
+  public eq(other: GutterMarker): boolean {
+    return other instanceof SpacerGutterMarker;
+  }
+
+  public toDOM?(): Node {
+    const outerEl = document.createElement("span");
+    outerEl.className = "blameLineMetadata";
+    return outerEl;
+  }
+}
 
 const DateToday = Date.now();
 const TwoDaysDurationMs = 172800000;
 const OneWeekDurationMs = 604800000;
 const OneMonthDurationMs = 2592000000;
 
-function Row({ index, style }: ListChildComponentProps<string[]>) {
-  const fileContents = useBlameStore((state) => state.fileContents);
+interface IBlameGutterRowProps {
+  index: number;
+}
+
+function BlameGutterRow({ index }: IBlameGutterRowProps) {
   const rowRevision: string | undefined = useBlameStore(
     (state) => state.revisionsByLine[index]
   );
@@ -132,6 +180,35 @@ function Row({ index, style }: ListChildComponentProps<string[]>) {
     setHoveredRevision("");
   }, []);
 
+  const setSelectedRevision = useBlameStore(
+    (state) => state.setSelectedRevision
+  );
+
+  const onListElementClicked = useCallback(() => {
+    if (rowRevision) {
+      setSelectedRevision(rowRevision);
+    }
+  }, [setSelectedRevision, rowRevision]);
+
+  const onListElementContextMenu = useCallback(() => {
+    if (rowRevision) {
+      const previousRevision =
+        useBlameStore.getState().previousRevisions[rowRevision];
+      showContextMenu(
+        <ContextMenu>
+          {previousRevision && (
+            <ContextMenuItem
+              label="Blame previous revision"
+              onClick={() => {
+                gitjetBlame.blameOtherRevision(previousRevision);
+              }}
+            />
+          )}
+        </ContextMenu>
+      );
+    }
+  }, [rowRevision]);
+
   const date = useMemo(() => {
     const time = rowRevShortData?.committer?.time;
     const tz = rowRevShortData?.committer?.tz;
@@ -141,7 +218,7 @@ function Row({ index, style }: ListChildComponentProps<string[]>) {
     return null;
   }, [rowRevShortData]);
 
-  let rowClasses = "blameFileLine";
+  let rowClasses = "blameLineMetadata";
   if (rowSelected) {
     rowClasses += " selected";
   }
@@ -149,42 +226,34 @@ function Row({ index, style }: ListChildComponentProps<string[]>) {
     rowClasses += " hovered";
   }
 
-  let lineNumberClasses = "blameFileLineNumber";
+  let lineDateClasses = "blameFileLineDate";
   const dateRow = date?.getTime();
   if (dateRow) {
     const dateDiff = DateToday - dateRow;
     if (dateDiff < TwoDaysDurationMs) {
-      lineNumberClasses += " hottest";
+      lineDateClasses += " hottest";
     } else if (dateDiff < OneWeekDurationMs) {
-      lineNumberClasses += " hotter";
+      lineDateClasses += " hotter";
     } else if (dateDiff < OneMonthDurationMs) {
-      lineNumberClasses += " hot";
+      lineDateClasses += " hot";
     }
   }
 
   return (
-    <div
+    <span
       className={rowClasses}
-      style={style}
       title={rowRevShortData?.summary}
       data-index={index}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onClick={onListElementClicked}
+      onContextMenu={onListElementContextMenu}
     >
-      <span className="blameLineMetadata">
-        <span className="blameFileLineAuthor">
-          {formatEmail(rowRevShortData?.author?.email)}
-        </span>
-        <span className="blameFileLineDate">{date?.toLocaleDateString()}</span>
-        <span
-          className={lineNumberClasses}
-          style={{ width: getLineNumberColWidth(fileContents.length) }}
-        >
-          {index + 1}
-        </span>
+      <span className="blameFileLineAuthor">
+        {formatEmail(rowRevShortData?.author?.email)}
       </span>
-      <span className="blameLineContent">{fileContents[index]}</span>
-    </div>
+      <span className={lineDateClasses}>{date?.toLocaleDateString()}</span>
+    </span>
   );
 }
 
@@ -196,50 +265,4 @@ function formatEmail(email: string | null | undefined): string {
     return email.substring(1, email.length - 1);
   }
   return email;
-}
-
-function getRevisionFromMouseEvent(event: MouseEvent): string | null {
-  const targetElement = event.target as Element;
-  if (targetElement) {
-    const rowElement = targetElement.closest(
-      ".blameFileLine"
-    ) as HTMLDivElement;
-    if (rowElement) {
-      const dataIndex = parseInt(rowElement.dataset.index!, 10);
-      if (dataIndex >= 0) {
-        const revision = useBlameStore.getState().revisionsByLine[dataIndex];
-        if (revision) {
-          return revision;
-        }
-      }
-    }
-  }
-  return null;
-}
-
-function getLineNumberColWidth(lines: number): number {
-  // Yes, this is silly and can be generalized.
-  const SingleNumCharWidth = 9;
-  if (lines < 10) {
-    return SingleNumCharWidth;
-  }
-  if (lines < 100) {
-    return SingleNumCharWidth * 2;
-  }
-  if (lines < 1000) {
-    return SingleNumCharWidth * 3;
-  }
-  if (lines < 10000) {
-    return SingleNumCharWidth * 4;
-  }
-  if (lines < 100000) {
-    return SingleNumCharWidth * 5;
-  }
-  if (lines < 1000000) {
-    return SingleNumCharWidth * 6;
-  }
-  if (lines < 10000000) {
-    return SingleNumCharWidth * 7;
-  }
-  return SingleNumCharWidth * 8;
 }

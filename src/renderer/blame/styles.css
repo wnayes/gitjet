@@ -2,10 +2,9 @@
     --blame-row-hover-bg-color: rgb(212, 235, 242);
     --blame-row-selected-bg-color: rgb(139, 186, 194);
     --blame-row-line-num-col-bg-color: rgb(224, 224, 224);
-    --blame-row-line-num-col-hottest-bg-color: rgb(141, 0, 0);
-    --blame-row-line-num-col-hottest-color: rgb(240, 240, 240);
-    --blame-row-line-num-col-hotter-bg-color: rgb(200, 82, 82);
-    --blame-row-line-num-col-hot-bg-color: rgb(250, 155, 155);
+    --blame-row-line-num-col-hottest-color: rgb(141, 0, 0);
+    --blame-row-line-num-col-hotter-color: rgb(200, 82, 82);
+    --blame-row-line-num-col-hot-color: rgb(222, 123, 123);
 }
 
 html, body, #root {
@@ -25,78 +24,67 @@ html, body, #root {
     flex-direction: column;
 }
 
-.blameFileLine {
-    font-family: 'Courier New', Courier, monospace;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    padding-right: 2px;
+.blameList {
+    height: 100%;
+    width: 100%;
 }
 
-.blameFileLineNumber {
-    display: inline-block;
-    flex-shrink: 0;
+.blameList .cm-editor {
     height: 100%;
-    text-align: right;
-    padding-right: 2px;
-    background-color: var(--blame-row-line-num-col-bg-color);
 }
-.blameFileLineNumber.hottest {
-    background-color: var(--blame-row-line-num-col-hottest-bg-color);
-    color: var(--blame-row-line-num-col-hottest-color);
+.blameList .cm-scroller {
+    font-family: "Recursive Mono", sans-serif;
 }
-.blameFileLineNumber.hotter {
-    background-color: var(--blame-row-line-num-col-hotter-bg-color);
+
+@font-face {
+    font-family: "Recursive Mono";
+    src: url("../fonts/RecursiveMonoLnrSt-Regular.woff2") format('woff2');
 }
-.blameFileLineNumber.hot {
-    background-color: var(--blame-row-line-num-col-hot-bg-color);
+@font-face {
+    font-family: "Recursive Sans";
+    src: url("../fonts/RecursiveSansLnrSt-Regular.woff2") format('woff2');
 }
 
 .blameLineMetadata {
     flex-shrink: 0;
     display: flex;
-    position: sticky;
-    padding-left: 2px;
+    justify-content: space-between;
+    padding-left: 4px;
+    padding-right: 4px;
     left: 0;
     height: 100%;
+    width: 200px;
     background-color: white;
     user-select: none;
+    font-family: "Recursive Sans", sans-serif;
+    color: black;
 }
 
 .blameFileLineAuthor {
     display: inline-block;
-    width: 120px;
-    font-size: 13px;
-    flex-shrink: 0;
     text-overflow: ellipsis;
     overflow: hidden;
-    font-family: Arial, Helvetica, sans-serif;
 }
 
 .blameFileLineDate {
-    width: 65px;
-    font-size: 13px;
     text-align: right;
-    padding-right: 2px;
     flex-shrink: 0;
-    font-family: Arial, Helvetica, sans-serif;
+}
+.blameFileLineDate.hottest {
+    color: var(--blame-row-line-num-col-hottest-color);
+}
+.blameFileLineDate.hotter {
+    color: var(--blame-row-line-num-col-hotter-color);
+}
+.blameFileLineDate.hot {
+    color: var(--blame-row-line-num-col-hot-color);
 }
 
-.blameLineContent {
-    height: 100%;
-    padding-left: 4px;
-}
-.blameLineContent:empty {
-    padding-left: 0;
-}
-
-.blameFileLine:not(.selected):hover .blameLineMetadata,
-.blameFileLine.hovered:not(.selected) .blameLineMetadata,
-.blameFileLine:hover .blameLineContent,
-.blameFileLine.hovered .blameLineContent {
+.blameLineMetadata:not(.selected):hover,
+.blameLineMetadata.hovered:not(.selected) {
     background-color: var(--blame-row-hover-bg-color);
 }
 
-.blameFileLine.selected .blameLineMetadata, .blameFileLine.selected .blameLineContent {
+.blameLineMetadata.selected {
     background-color: var(--blame-row-selected-bg-color);
 }
