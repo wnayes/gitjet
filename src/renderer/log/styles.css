@@ -27,20 +27,6 @@ html, body, #root {
     cursor: default;
 }
 
-.breadcrumbs {
-    height: 24px;
-    flex-shrink: 0;
-    padding-left: 4px;
-    display: flex;
-    align-items: center;
-}
-
-.breadcrumb:not(:last-child)::after {
-    display: inline-block;
-    margin: 0 0.5rem;
-    content: "→"
-}
-
 .searchBox {
     height: 30px;
     width: calc(100% - 8px);

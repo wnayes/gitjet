@@ -20,6 +20,19 @@
     cursor: pointer;
 }
 
+.breadcrumbs {
+    height: 24px;
+    flex-shrink: 0;
+    padding-left: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb:not(:last-child)::after {
+    display: inline-block;
+    margin: 0 0.5rem;
+    content: "→"
+}
 
 .mergeCommitInfo {
     font-size: 11px;

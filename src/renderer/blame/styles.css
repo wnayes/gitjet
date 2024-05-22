@@ -5,6 +5,7 @@
     --blame-row-line-num-col-hottest-color: rgb(141, 0, 0);
     --blame-row-line-num-col-hotter-color: rgb(200, 82, 82);
     --blame-row-line-num-col-hot-color: rgb(222, 123, 123);
+    --blame-textarea-border-color: #ddd;
 }
 
 html, body, #root {
@@ -27,6 +28,7 @@ html, body, #root {
 .blameList {
     height: 100%;
     width: 100%;
+    border-top: 1px solid var(--blame-textarea-border-color);
 }
 
 .blameList .cm-editor {

@@ -3,6 +3,7 @@ import { BlameList } from "./BlameList";
 import { useBlameStore } from "../store";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { BlameRevisionDetails } from "./BlameRevisionDetails";
+import { BlameBreadcrumbs } from "./Breadcrumbs";
 
 export const App = () => {
   const setRepository = useBlameStore((state) => state.setRepository);
@@ -39,6 +40,7 @@ export const App = () => {
 
   return (
     <div className="app">
+      <BlameBreadcrumbs />
       <PanelGroup direction="vertical">
         <Panel maxSize={75}>
           <BlameList />

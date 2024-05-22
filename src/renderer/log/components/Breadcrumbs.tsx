@@ -1,57 +1,30 @@
 import { useGitStore } from "../store";
-import {
-  getFileName,
-  normalizePath,
-  removeGitFolderFromPath,
-  removeTrailingSlashes,
-} from "../../../shared/paths";
 import { HashAbbrLength } from "../../../shared/constants";
 import { looksLikeCommitHash } from "../../../shared/GitTypes";
+import {
+  Breadcrumb,
+  FilePathBreadcrumb,
+  RepositoryBreadcrumb,
+  WorktreeBreadcrumb,
+} from "../../components/Breadcrumbs";
 
-interface IBreadcrumbProps {
-  caption: string;
-}
-
-const Breadcrumb = ({ caption }: IBreadcrumbProps) => {
-  return <div className="breadcrumb">{caption}</div>;
+const LogRepositoryBreadcrumb = () => {
+  const repository = useGitStore((state) => state.repository);
+  return <RepositoryBreadcrumb repository={repository} />;
 };
 
-const RepositoryBreadcrumb = () => {
-  let repository =
-    useGitStore((state) => state.repository) || "(unset repository)";
-  repository = getFileName(removeGitFolderFromPath(repository));
-  return <Breadcrumb caption={repository} />;
-};
-
-const WorktreeBreadcrumb = () => {
+const LogWorktreeBreadcrumb = () => {
   const repository = useGitStore((state) => state.repository);
   const worktree = useGitStore((state) => state.worktree);
-
-  if (!worktree || repoAndWorktreeMatch(repository, worktree)) {
-    return null;
-  }
-
-  return <Breadcrumb caption={getFileName(worktree)} />;
+  return <WorktreeBreadcrumb repository={repository} worktree={worktree} />;
 };
 
-const FilePathBreadcrumb = () => {
+const LogFilePathBreadcrumb = () => {
   const filePath = useGitStore((state) => state.filePath);
-  if (!filePath) {
-    return null;
-  }
-  const fileName = getFileName(filePath);
-
-  return <Breadcrumb caption={fileName} />;
+  return <FilePathBreadcrumb filePath={filePath} />;
 };
 
-function repoAndWorktreeMatch(repository: string, worktree: string): boolean {
-  return (
-    normalizePath(removeGitFolderFromPath(repository)) ===
-    normalizePath(removeTrailingSlashes(worktree))
-  );
-}
-
-const BranchSelectBreadcrumb = () => {
+const LogBranchSelectBreadcrumb = () => {
   const branch = useGitStore((state) => state.branch) || "(unset branch)";
   const revisionCount = useGitStore((state) => state.revisionData.length);
   const revisionsLoaded = useGitStore((state) => state.revisionCountKnown);
@@ -74,10 +47,10 @@ const BranchSelectBreadcrumb = () => {
 export const LogStateBreadcrumbs = () => {
   return (
     <div className="breadcrumbs">
-      <RepositoryBreadcrumb />
-      <WorktreeBreadcrumb />
-      <FilePathBreadcrumb />
-      <BranchSelectBreadcrumb />
+      <LogRepositoryBreadcrumb />
+      <LogWorktreeBreadcrumb />
+      <LogFilePathBreadcrumb />
+      <LogBranchSelectBreadcrumb />
     </div>
   );
 };
