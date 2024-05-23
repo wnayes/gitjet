@@ -1,18 +1,42 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Root, createRoot } from "react-dom/client";
 import { useBlameStore } from "../store";
 import { RevisionShortData } from "../../../shared/ipc";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { gitTimeAndTzToDate } from "../../../shared/GitTypes";
 import {
   ContextMenu,
   ContextMenuItem,
   showContextMenu,
 } from "../../components/ContextMenu";
-import { basicSetup, EditorView } from "codemirror";
-import { gutter, GutterMarker } from "@codemirror/view";
 import { Compartment, Text, EditorState } from "@codemirror/state";
 import { languages } from "@codemirror/language-data";
-import { LanguageDescription, LanguageSupport } from "@codemirror/language";
-import { Root, createRoot } from "react-dom/client";
+import { defaultKeymap } from "@codemirror/commands";
+import {
+  gutter,
+  GutterMarker,
+  keymap,
+  highlightSpecialChars,
+  drawSelection,
+  highlightActiveLine,
+  rectangularSelection,
+  crosshairCursor,
+  lineNumbers,
+  EditorView,
+} from "@codemirror/view";
+import {
+  defaultHighlightStyle,
+  syntaxHighlighting,
+  bracketMatching,
+  foldGutter,
+  foldKeymap,
+  LanguageDescription,
+  LanguageSupport,
+} from "@codemirror/language";
+import {
+  search,
+  searchKeymap,
+  highlightSelectionMatches,
+} from "@codemirror/search";
 
 export const BlameList = () => {
   const fileName = useBlameStore((state) => state.filePath);
@@ -65,7 +89,19 @@ export const BlameList = () => {
           },
           initialSpacer: () => SpacerGutterMarker.Instance,
         }),
-        basicSetup,
+        lineNumbers(),
+        highlightSpecialChars(),
+        foldGutter(),
+        drawSelection(),
+        EditorState.allowMultipleSelections.of(true),
+        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+        bracketMatching(),
+        rectangularSelection(),
+        crosshairCursor(),
+        highlightActiveLine(),
+        highlightSelectionMatches(),
+        search({ top: true }),
+        keymap.of([...defaultKeymap, ...searchKeymap, ...foldKeymap]),
         EditorState.readOnly.of(true),
         langCompartment.of(langCompartmentValue),
       ],
