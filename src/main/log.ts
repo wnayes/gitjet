@@ -1,6 +1,6 @@
 import { BrowserWindow, WebContents, ipcMain } from "electron";
-import path from "node:path";
-import { getGitReferences } from "./git";
+import path, { isAbsolute, join, resolve } from "node:path";
+import { getCurrentBranch, getGitFolderPath, getGitReferences } from "./git";
 import { ISearchInstance, LogDataCache } from "./LogDataCache";
 import {
   CommonIPCChannels,
@@ -73,13 +73,22 @@ ipcMain.on(IPCChannels.SearchResume, (e: Electron.IpcMainInvokeEvent) => {
 export function initializeShowLogForCommit(): void {
   ipcMain.on(
     CommonIPCChannels.ShowLogForCommit,
-    (
+    async (
       e: Electron.IpcMainInvokeEvent,
-      repoPath: string,
+      repoPath: string | null,
       worktreePath: string,
       filePath: string,
-      commit: string
+      commit: string | null
     ) => {
+      if (!repoPath) {
+        repoPath = await getGitFolderPath(worktreePath);
+      }
+      if (!commit) {
+        commit = await getCurrentBranch(worktreePath);
+      }
+      if (!isAbsolute(filePath)) {
+        filePath = resolve(join(worktreePath, filePath));
+      }
       launchLogWindow(repoPath, worktreePath, filePath, commit);
     }
   );

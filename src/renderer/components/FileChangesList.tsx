@@ -5,12 +5,14 @@ import {
   GitRevisionData,
   gitFileChangeEnumToTypeString,
 } from "../../shared/GitTypes";
+import { ContextMenu, ContextMenuItem, showContextMenu } from "./ContextMenu";
 
 interface IFileChangeRowProps {
   change: GitFileChange;
   selected?: boolean;
   onClick?: (change: GitFileChange) => void;
   onDoubleClick?: (change: GitFileChange) => void;
+  onContextMenu?: (change: GitFileChange) => void;
 }
 
 const FileChangeRow = ({
@@ -18,6 +20,7 @@ const FileChangeRow = ({
   selected,
   onClick,
   onDoubleClick,
+  onContextMenu,
 }: IFileChangeRowProps) => {
   let rowClasses = "fileChangeRow";
   if (selected) {
@@ -28,6 +31,10 @@ const FileChangeRow = ({
   const onRowDoubleClick = useCallback(
     () => onDoubleClick?.(change),
     [change, onDoubleClick]
+  );
+  const onRowContextMenu = useCallback(
+    () => onContextMenu?.(change),
+    [change, onContextMenu]
   );
 
   let changeTypeClasses = "fileChangeType";
@@ -51,6 +58,7 @@ const FileChangeRow = ({
       className={rowClasses}
       onClick={onRowClick}
       onDoubleClick={onRowDoubleClick}
+      onContextMenu={onRowContextMenu}
     >
       <span className={changeTypeClasses}>
         {gitFileChangeEnumToTypeString(change.type)}
@@ -87,6 +95,24 @@ export const FileChangesList = ({
     [revisionData]
   );
 
+  const onRowContextMenu = useCallback((change: GitFileChange) => {
+    showContextMenu(
+      <ContextMenu>
+        <ContextMenuItem
+          label="Show log for file"
+          onClick={() => {
+            gitjetCommon.showLogForCommit(
+              null,
+              worktreePath,
+              change.path,
+              null
+            );
+          }}
+        />
+      </ContextMenu>
+    );
+  }, []);
+
   return (
     <div className="fileChangesList">
       {revisionData.changes?.map((change) => {
@@ -97,6 +123,7 @@ export const FileChangesList = ({
             selected={change.path === selectedPath}
             onClick={onRowClick}
             onDoubleClick={onRowDoubleClick}
+            onContextMenu={onRowContextMenu}
           />
         );
       })}

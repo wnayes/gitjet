@@ -12,10 +12,10 @@ export interface GitJetCommonBridge {
     callback: (choice: number) => void
   ): void;
   showLogForCommit(
-    repoPath: string,
+    repoPath: string | null,
     worktreePath: string,
     filePath: string | null | undefined,
-    commit: string
+    commit: string | null
   ): void;
   launchDiffTool(revision: string, worktreePath: string, path: string): void;
 }
