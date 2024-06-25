@@ -233,7 +233,7 @@ export function getParentRevision(
 ): Promise<string | undefined> {
   return new Promise((resolve) => {
     exec(
-      `${GitPath} rev-parse ${revision}^1`,
+      `${GitPath} rev-parse "${revision}^1"`,
       { cwd: worktreePath },
       (error, stdout, stderr) => {
         if (error || stderr) {
