@@ -63,7 +63,7 @@ interface ILaunchBlameWindowProps {
 export function launchBlameWindow(props: ILaunchBlameWindowProps): void {
   const { repoPath, worktreePath, filePath, revision, startingLine } = props;
 
-  const blameWindow = new BrowserWindow({
+  let blameWindow: BrowserWindow | null = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
@@ -95,7 +95,7 @@ export function launchBlameWindow(props: ILaunchBlameWindowProps): void {
   getFileContentsAtRevision(worktreePath, filePath, revision ?? "HEAD").then(
     (text) => {
       fileContents = text;
-      if (ready) {
+      if (ready && blameWindow) {
         blameWindow.webContents.send(
           BlameIPCChannels.BlameFileContents,
           fileContents
@@ -108,7 +108,7 @@ export function launchBlameWindow(props: ILaunchBlameWindowProps): void {
   const blameDataToSend: BlameData[] = [];
   loadBlameData(worktreePath, filePath, revision, (blameData) => {
     if (ready) {
-      blameWindow.webContents.send(BlameIPCChannels.BlameData, blameData);
+      blameWindow?.webContents.send(BlameIPCChannels.BlameData, blameData);
     } else {
       blameDataToSend.push(...blameData);
     }
@@ -118,6 +118,10 @@ export function launchBlameWindow(props: ILaunchBlameWindowProps): void {
   const onReady = () => {
     const wasReady = ready;
     ready = true;
+
+    if (!blameWindow) {
+      return;
+    }
 
     const repositoryInfo: RepositoryInfoArgs = {
       repository: repoPath,
@@ -160,7 +164,7 @@ export function launchBlameWindow(props: ILaunchBlameWindowProps): void {
   const onLoadRevisionData = async (revision: string) => {
     const revDataCache = getRevisionDataCache(repoPath);
     const data = await revDataCache.loadRevisionData(revision);
-    blameWindow.webContents.send(BlameIPCChannels.BlameRevisionData, data);
+    blameWindow?.webContents.send(BlameIPCChannels.BlameRevisionData, data);
   };
 
   const { webContents } = blameWindow;
@@ -172,5 +176,6 @@ export function launchBlameWindow(props: ILaunchBlameWindowProps): void {
 
   blameWindow.on("closed", () => {
     _blameWindows.delete(webContents);
+    blameWindow = null;
   });
 }

@@ -108,7 +108,7 @@ export function launchLogWindow(
   );
   let searchInstance: ISearchInstance | null | undefined;
 
-  const mainWindow = new BrowserWindow({
+  let mainWindow: BrowserWindow | null = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
@@ -136,6 +136,10 @@ export function launchLogWindow(
   }
 
   const onReady = () => {
+    if (!mainWindow) {
+      return;
+    }
+
     const repositoryInfo: RepositoryInfoArgs = {
       repository: repoPath,
       worktree: worktreePath,
@@ -151,7 +155,7 @@ export function launchLogWindow(
     } as RevisionCountArgs);
     if (!revisionsAllLoaded) {
       logDataCache.onGotRevisions((args) => {
-        mainWindow.webContents.send(IPCChannels.Revisions, {
+        mainWindow?.webContents.send(IPCChannels.Revisions, {
           revisionCount: logDataCache.getRevisionCount(),
           allLoaded: args.allLoaded,
         } as RevisionCountArgs);
@@ -160,14 +164,14 @@ export function launchLogWindow(
 
     setTimeout(() => {
       getGitReferences(worktreePath).then((map) => {
-        mainWindow.webContents.send(IPCChannels.Refs, map);
+        mainWindow?.webContents.send(IPCChannels.Refs, map);
       });
     }, 16);
   };
 
   const onLoadRevisionData = async (startIndex: number, count: number) => {
     const datas = await logDataCache.loadRevisionDataRange(startIndex, count);
-    mainWindow.webContents.send(IPCChannels.RevisionData, {
+    mainWindow?.webContents.send(IPCChannels.RevisionData, {
       startIndex,
       data: datas,
     });
@@ -183,14 +187,14 @@ export function launchLogWindow(
           searchText,
           revisionMatch,
         };
-        mainWindow.webContents.send(IPCChannels.SearchResult, resultPayload);
+        mainWindow?.webContents.send(IPCChannels.SearchResult, resultPayload);
       },
       onProgress: (currentRevision) => {
         const progressPayload: SearchProgressData = {
           searchText,
           currentRevision,
         };
-        mainWindow.webContents.send(
+        mainWindow?.webContents.send(
           IPCChannels.SearchProgress,
           progressPayload
         );
@@ -229,5 +233,6 @@ export function launchLogWindow(
 
   mainWindow.on("closed", () => {
     _logWindows.delete(webContents);
+    mainWindow = null;
   });
 }
