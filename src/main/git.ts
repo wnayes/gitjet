@@ -7,13 +7,21 @@ import {
 } from "../shared/GitTypes";
 import { arrayAppend } from "../shared/arrays";
 import { spawn, exec } from "node:child_process";
-import { getGitWorktreeRelativePath } from "../shared/paths";
+import {
+  getGitWorktreeRelativePath,
+  removeTrailingSlashes,
+} from "../shared/paths";
 import { BlameData } from "../shared/ipc";
+import { getDirectoryIfFilePath } from "./paths";
 
 const GitPath = "git";
 
 /** Tests if a given path is within a Git worktree. */
-export function isPathWithinGitRepository(path: string): Promise<boolean> {
+export async function isPathWithinGitRepository(
+  path: string
+): Promise<boolean> {
+  path = await getDirectoryIfFilePath(path);
+
   return new Promise((resolve) => {
     const revparse = spawn(GitPath, ["-C", path, "rev-parse"]);
     revparse.on("close", (code) => {
@@ -40,7 +48,9 @@ export function getGitFolderPath(worktreePath: string): Promise<string> {
 }
 
 /** Gets the working copy root directory based on a given path. */
-export function getWorkingCopyRoot(path: string): Promise<string> {
+export async function getWorkingCopyRoot(path: string): Promise<string> {
+  path = await getDirectoryIfFilePath(path);
+
   return new Promise((resolve, reject) => {
     exec(
       `${GitPath} rev-parse --path-format=absolute --show-toplevel`,
@@ -53,7 +63,7 @@ export function getWorkingCopyRoot(path: string): Promise<string> {
           reject(error || stderr);
           return;
         }
-        resolve(stdout.trim());
+        resolve(removeTrailingSlashes(stdout.trim()));
       }
     );
   });

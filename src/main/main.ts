@@ -8,7 +8,7 @@ import {
   getWorkingCopyRoot,
   isPathWithinGitRepository,
 } from "./git";
-import { getDirectory } from "../shared/paths";
+import { getDirectory, removeTrailingSlashes } from "../shared/paths";
 import { handleSquirrelSetup } from "./squirrel";
 import { launchBlameWindow } from "./blame";
 import { initializeContextMenuSupport } from "./ContextMenu";
@@ -133,25 +133,21 @@ async function startLogMode(args: string[]): Promise<void> {
     if (!isAbsolute(worktreePath)) {
       worktreePath = resolve(join(getCurrentWorkingDirectory(), worktreePath));
     }
-
-    const worktreePathStat = await stat(worktreePath);
-    if (worktreePathStat.isFile()) {
-      filePath = worktreePath;
-      const worktreeDir = getDirectory(worktreePath);
-      if (!worktreeDir) {
-        console.error("Unexpected input, exiting.");
-        process.exit(1);
-      }
-      worktreePath = worktreeDir;
-    }
   }
+
+  worktreePath = removeTrailingSlashes(worktreePath);
 
   if (!(await isPathWithinGitRepository(worktreePath))) {
     console.error("Not within a git repository, exiting.");
     process.exit(1);
   }
 
-  worktreePath = await getWorkingCopyRoot(worktreePath);
+  const worktreeRoot = await getWorkingCopyRoot(worktreePath);
+  if (worktreeRoot !== worktreePath) {
+    filePath = worktreePath;
+  }
+  worktreePath = worktreeRoot;
+
   const repoPath = await getGitFolderPath(worktreePath);
 
   if (args.length === 2) {
