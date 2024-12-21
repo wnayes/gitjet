@@ -10,6 +10,12 @@ export const ContextMenuItem: FC<IContextMenuItemProps> = () => {
   return null;
 };
 
+export interface IContextMenuSeparatorProps {}
+
+export const ContextMenuSeparator: FC<IContextMenuSeparatorProps> = () => {
+  return null;
+};
+
 export interface IContextMenuProps {
   children: ReactNode;
 }
@@ -20,16 +26,20 @@ export const ContextMenu: FC<IContextMenuProps> = () => {
 
 export function showContextMenu(items: ReactElement<IContextMenuProps>): void {
   let i = 0;
-  const handlers: { [choice: number]: VoidFunction } = {};
+  const handlers: (VoidFunction | null)[] = [];
   const menuItems: IMenuItemOptions[] = Children.map(
     items.props.children,
     (child) => {
       if (!child || typeof child !== "object" || !("type" in child)) return;
       if (child.type === ContextMenuItem) {
-        handlers[i++] = child.props.onClick;
+        handlers.push(child.props.onClick);
         return {
           label: child.props.label as string,
         };
+      }
+      if (child.type === ContextMenuSeparator) {
+        handlers.push(null);
+        return { type: "separator" as const };
       }
       return null;
     }

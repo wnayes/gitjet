@@ -1,3 +1,4 @@
 export interface IMenuItemOptions {
-  label: string;
+  type?: "normal" | "separator";
+  label?: string;
 }
