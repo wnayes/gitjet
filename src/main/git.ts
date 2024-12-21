@@ -180,7 +180,7 @@ export function loadRevisionData(
       throw new Error("Missing revision");
     }
     exec(
-      `${GitPath} -C "${repoPath}" show --format=format:"%P%x00%an%x00%ae%x00%aI%x00%B%x00" --name-status -m --first-parent --no-abbrev ${revision}`,
+      `${GitPath} -C "${repoPath}" show --format=format:"%P%x00%an%x00%ae%x00%aI%x00%B%x00" --name-status -z -m --first-parent --no-abbrev ${revision}`,
       function (error, stdout, stderr) {
         if (stderr) {
           console.error(stderr);
@@ -206,23 +206,25 @@ export function loadRevisionData(
             data.subject = message;
           }
 
+          // Changes are on lines 5 and beyond.
+          if (lines.length >= 6) {
+            lines[5] = lines[5].trimStart(); // First one has extra newline before it.
+          }
           const changes: GitFileChange[] = [];
-          const changeLines = lines[5].split("\n");
-          for (let i = 1; i < changeLines.length - 1; i++) {
-            const line = changeLines[i];
-            const typeString = line[0];
+          for (let i = 5; i < lines.length; i++) {
+            const typeString = lines[i]?.[0]; // Remove any extra numbers (R type has these)
+            if (!typeString) {
+              continue; // Probably at the end.
+            }
             const change: GitFileChange = {
               type: gitFileChangeTypeStringToEnum(typeString),
-              path: line.substring(1).trimStart(),
+              path: "",
             };
+            change.path = lines[++i];
             if (change.type === GitFileChangeType.Rename) {
-              // These show up as `017 old-path new-path`.
+              // These show up as `R017 old-path new-path`.
               // Not sure what the numbers refer to.
-              const pieces = line.replace(/\s+/g, "\x00").split("\x00");
-              change.path = pieces[pieces.length - 2];
-              change.newPath = pieces[pieces.length - 1];
-            } else {
-              change.path = line.substring(1).trimStart();
+              change.newPath = lines[++i];
             }
             changes.push(change);
           }
