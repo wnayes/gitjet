@@ -9,6 +9,11 @@ import { Row } from "./Row";
 import InfiniteLoader from "react-window-infinite-loader";
 import { useResizeHandler } from "../../hooks/useResizeHandler";
 import { useCombinedRef } from "../../hooks/useCombinedRef";
+import {
+  ContextMenu,
+  ContextMenuItem,
+  showContextMenu,
+} from "../../components/ContextMenu";
 
 interface IDataListProps {
   height: number;
@@ -30,20 +35,49 @@ export const DataList = ({ height, width }: IDataListProps) => {
 
   const setSelectedRevision = useGitStore((state) => state.setSelectedRevision);
 
+  const getDataIndexFromEvent = useCallback((event: Event) => {
+    const targetElement = event.target as Element;
+    if (targetElement) {
+      const rowElement = targetElement.closest(".dataRow") as HTMLDivElement;
+      if (rowElement) {
+        return parseInt(rowElement.dataset.index!, 10);
+      }
+    }
+    return -1;
+  }, []);
+
   const onListElementClicked = useCallback(
     (event: MouseEvent) => {
-      const targetElement = event.target as Element;
-      if (targetElement) {
-        const rowElement = targetElement.closest(".dataRow") as HTMLDivElement;
-        if (rowElement) {
-          const dataIndex = parseInt(rowElement.dataset.index!, 10);
-          if (dataIndex >= 0) {
-            setSelectedRevision(dataIndex);
-          }
-        }
+      const dataIndex = getDataIndexFromEvent(event);
+      if (dataIndex >= 0) {
+        setSelectedRevision(dataIndex);
       }
     },
-    [setSelectedRevision]
+    [getDataIndexFromEvent, setSelectedRevision]
+  );
+
+  const onListElementContextMenu = useCallback(
+    (event: MouseEvent) => {
+      const dataIndex = getDataIndexFromEvent(event);
+      if (dataIndex >= 0) {
+        setSelectedRevision(dataIndex);
+        showContextMenu(
+          <ContextMenu>
+            <ContextMenuItem
+              label="Copy revision to clipboard"
+              onClick={() => {
+                const revision =
+                  useGitStore.getState().revisionData[dataIndex]?.revision;
+                if (revision) {
+                  navigator.clipboard.writeText(revision);
+                }
+              }}
+            />
+          </ContextMenu>
+        );
+      }
+    },
+    [getDataIndexFromEvent, setSelectedRevision]
   );
 
   const onListResize = useCallback(() => {
@@ -60,8 +94,14 @@ export const DataList = ({ height, width }: IDataListProps) => {
     const containerEl = listContainerElRef.current;
     if (containerEl) {
       containerEl.addEventListener("click", onListElementClicked);
-      return () =>
+      containerEl.addEventListener("contextmenu", onListElementContextMenu);
+      return () => {
         containerEl.removeEventListener("click", onListElementClicked);
+        containerEl.removeEventListener(
+          "contextmenu",
+          onListElementContextMenu
+        );
+      };
     }
   });
 
