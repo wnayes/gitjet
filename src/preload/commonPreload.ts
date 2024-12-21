@@ -24,6 +24,10 @@ const bridge: GitJetCommonBridge = {
     );
   },
 
+  revertCommit: (worktreePath, commit) => {
+    ipcRenderer.send(CommonIPCChannels.RevertCommit, worktreePath, commit);
+  },
+
   launchDiffTool: (revision, worktreePath, path) => {
     ipcRenderer.send(
       CommonIPCChannels.LaunchDiffTool,

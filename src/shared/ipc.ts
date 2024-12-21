@@ -17,12 +17,14 @@ export interface GitJetCommonBridge {
     filePath: string | null | undefined,
     commit: string | null
   ): void;
+  revertCommit(worktreePath: string, commit: string): void;
   launchDiffTool(revision: string, worktreePath: string, path: string): void;
 }
 
 export enum CommonIPCChannels {
   ShowContextMenu = "ShowContextMenu",
   ShowLogForCommit = "showLogForCommit",
+  RevertCommit = "revertCommit",
   LaunchDiffTool = "launchDiffTool",
 }
 

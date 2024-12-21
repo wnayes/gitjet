@@ -1,7 +1,11 @@
 import { app } from "electron";
 import { stat } from "node:fs/promises";
 import { isAbsolute, join, resolve } from "node:path";
-import { initializeShowLogForCommit, launchLogWindow } from "./log";
+import {
+  initializeRevertCommit,
+  initializeShowLogForCommit,
+  launchLogWindow,
+} from "./log";
 import {
   getCurrentBranch,
   getGitFolderPath,
@@ -30,6 +34,7 @@ app.whenReady().then(async () => {
   initializeContextMenuSupport();
   initializeLaunchDiffViewerSupport();
   initializeShowLogForCommit();
+  initializeRevertCommit();
 
   const mode = args[0];
   switch (mode) {

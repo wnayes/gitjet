@@ -1,6 +1,11 @@
 import { BrowserWindow, WebContents, ipcMain } from "electron";
 import path, { isAbsolute, join, resolve } from "node:path";
-import { getCurrentBranch, getGitFolderPath, getGitReferences } from "./git";
+import {
+  getCurrentBranch,
+  getGitFolderPath,
+  getGitReferences,
+  revertCommit,
+} from "./git";
 import { ISearchInstance, LogDataCache } from "./LogDataCache";
 import {
   CommonIPCChannels,
@@ -90,6 +95,15 @@ export function initializeShowLogForCommit(): void {
         filePath = resolve(join(worktreePath, filePath));
       }
       launchLogWindow(repoPath, worktreePath, filePath, commit);
+    }
+  );
+}
+
+export function initializeRevertCommit(): void {
+  ipcMain.on(
+    CommonIPCChannels.RevertCommit,
+    (e: Electron.IpcMainInvokeEvent, worktreePath: string, commit: string) => {
+      revertCommit(worktreePath, commit);
     }
   );
 }

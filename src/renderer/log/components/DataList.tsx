@@ -12,6 +12,7 @@ import { useCombinedRef } from "../../hooks/useCombinedRef";
 import {
   ContextMenu,
   ContextMenuItem,
+  ContextMenuSeparator,
   showContextMenu,
 } from "../../components/ContextMenu";
 
@@ -70,6 +71,18 @@ export const DataList = ({ height, width }: IDataListProps) => {
                   useGitStore.getState().revisionData[dataIndex]?.revision;
                 if (revision) {
                   navigator.clipboard.writeText(revision);
+                }
+              }}
+            />
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              label="Create revert commit"
+              onClick={() => {
+                const state = useGitStore.getState();
+                const worktreePath = state.worktree;
+                const revision = state.revisionData[dataIndex]?.revision;
+                if (revision) {
+                  gitjetCommon.revertCommit(worktreePath, revision);
                 }
               }}
             />

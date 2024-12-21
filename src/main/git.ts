@@ -283,6 +283,27 @@ export function launchDiffTool(
   });
 }
 
+/** Performs a `git revert` of a given commit hash. */
+export function revertCommit(
+  worktreePath: string,
+  revision: string
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    console.log(`${GitPath} revert ${revision}`);
+    exec(
+      `${GitPath} revert ${revision}`,
+      { cwd: worktreePath },
+      (error, stdout, stderr) => {
+        if (error || stderr) {
+          reject(error || stderr);
+          return;
+        }
+        resolve();
+      }
+    );
+  });
+}
+
 export function getFileContentsAtRevision(
   worktreePath: string,
   filePath: string,
