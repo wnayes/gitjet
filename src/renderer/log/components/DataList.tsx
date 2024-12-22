@@ -74,6 +74,30 @@ export const DataList = ({ height, width }: IDataListProps) => {
                 }
               }}
             />
+            <ContextMenuItem
+              label="Copy subject to clipboard"
+              onClick={() => {
+                const revisionData =
+                  useGitStore.getState().revisionData[dataIndex];
+                if (revisionData && revisionData.subject) {
+                  navigator.clipboard.writeText(revisionData.subject);
+                }
+              }}
+            />
+            <ContextMenuItem
+              label="Copy commit message to clipboard"
+              onClick={() => {
+                const revisionData =
+                  useGitStore.getState().revisionData[dataIndex];
+                let message = revisionData?.subject ?? "";
+                if (revisionData?.body) {
+                  message += "\n\n" + revisionData.body;
+                }
+                if (message) {
+                  navigator.clipboard.writeText(message);
+                }
+              }}
+            />
             <ContextMenuSeparator />
             <ContextMenuItem
               label="Create revert commit"
