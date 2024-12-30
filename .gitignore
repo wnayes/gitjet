@@ -3,5 +3,6 @@ dist.js
 dist.js.map
 .vite/
 out/
+*.tsbuildinfo
 
 .vscode
