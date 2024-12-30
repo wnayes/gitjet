@@ -8,6 +8,7 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
+    "check": "tsc -b ./tsconfig.json",
     "lint": "eslint --ext .ts,.tsx ."
   },
   "repository": "https://github.com/wnayes/gitjet",
