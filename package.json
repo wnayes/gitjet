@@ -38,7 +38,7 @@
     "eslint-plugin-import": "^2.29.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
-    "vite": "^5.3.2"
+    "vite": "^6.0.11"
   },
   "dependencies": {
     "@codemirror/commands": "^6.8.0",
