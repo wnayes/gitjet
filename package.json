@@ -9,7 +9,7 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "check": "tsc -b ./tsconfig.json",
-    "lint": "eslint --ext .ts,.tsx ."
+    "lint": "eslint ."
   },
   "repository": "https://github.com/wnayes/gitjet",
   "keywords": [
@@ -27,17 +27,21 @@
     "@electron-forge/plugin-fuses": "^7.6.1",
     "@electron-forge/plugin-vite": "^7.6.1",
     "@electron/fuses": "^1.8.0",
+    "@eslint/compat": "^1.2.5",
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.19.0",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@types/react-window": "^1.8.8",
     "@types/react-window-infinite-loader": "^1.0.9",
-    "@typescript-eslint/eslint-plugin": "^5.0.0",
-    "@typescript-eslint/parser": "^5.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.21.0",
+    "@typescript-eslint/parser": "^8.21.0",
     "electron": "^34.0.1",
-    "eslint": "^8.0.1",
-    "eslint-plugin-import": "^2.29.1",
+    "eslint": "^9.19.0",
+    "globals": "^15.14.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
+    "typescript-eslint": "^8.21.0",
     "vite": "^6.0.11"
   },
   "dependencies": {

@@ -390,7 +390,7 @@ export function loadBlameData(
   const OneSecondMs = 1000;
   let lastSendTime = performance.now();
 
-  let currentArgs: BlameData | null | undefined;
+  let currentArgs: Partial<BlameData> | null | undefined;
   let argsReadyToSend: BlameData[] = [];
 
   blameProcess.stdout.on("data", (data) => {
@@ -400,13 +400,13 @@ export function loadBlameData(
         continue;
       }
       if (!currentArgs) {
-        currentArgs = {} as any;
+        currentArgs = {};
 
         const [revision, sourceLine, resultLine, numLines] = line.split(" ");
-        currentArgs!.revision = revision;
-        currentArgs!.sourceLine = parseInt(sourceLine, 10);
-        currentArgs!.resultLine = parseInt(resultLine, 10);
-        currentArgs!.numLines = parseInt(numLines, 10);
+        currentArgs.revision = revision;
+        currentArgs.sourceLine = parseInt(sourceLine, 10);
+        currentArgs.resultLine = parseInt(resultLine, 10);
+        currentArgs.numLines = parseInt(numLines, 10);
       } else if (line.startsWith("author")) {
         if (!currentArgs.revisionShortData) {
           currentArgs.revisionShortData = { author: {} };
@@ -476,7 +476,7 @@ export function loadBlameData(
         if (!currentArgs) {
           throw new Error("Unexpected state");
         }
-        argsReadyToSend.push(currentArgs);
+        argsReadyToSend.push(currentArgs as BlameData);
         currentArgs = null;
       }
     }

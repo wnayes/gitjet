@@ -63,7 +63,7 @@ export function getBuildDefine(env: ConfigEnv<"build">) {
       [VITE_NAME]: JSON.stringify(name),
     };
     return { ...acc, ...def };
-  }, {} as Record<string, any>);
+  }, {} as Record<string, unknown>);
 
   return define;
 }

@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-export interface IButtonProps extends React.PropsWithChildren<any> {
+export interface IButtonProps extends React.PropsWithChildren {
   className?: string;
   onClick?(): void;
 }

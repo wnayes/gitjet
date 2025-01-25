@@ -10,6 +10,7 @@ export const ContextMenuItem: FC<IContextMenuItemProps> = () => {
   return null;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface IContextMenuSeparatorProps {}
 
 export const ContextMenuSeparator: FC<IContextMenuSeparatorProps> = () => {
@@ -25,7 +26,6 @@ export const ContextMenu: FC<IContextMenuProps> = () => {
 };
 
 export function showContextMenu(items: ReactElement<IContextMenuProps>): void {
-  let i = 0;
   const handlers: (VoidFunction | null)[] = [];
   const menuItems: IMenuItemOptions[] = Children.map(
     items.props.children,

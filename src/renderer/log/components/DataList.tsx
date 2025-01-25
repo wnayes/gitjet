@@ -31,7 +31,7 @@ export const DataList = ({ height, width }: IDataListProps) => {
     (state) => state.searchCurrentRevisionIndex === state.revisionData.length
   );
 
-  const listRef = useRef<FixedSizeList<any> | null>(null);
+  const listRef = useRef<FixedSizeList | null>(null);
   const listContainerElRef = useRef<HTMLDivElement | null>(null);
 
   const setSelectedRevision = useGitStore((state) => state.setSelectedRevision);
@@ -196,10 +196,10 @@ interface IListWrapperProps {
   height: number;
   width: number;
   itemCount: number;
-  listContainerElRef: Ref<any>;
-  listRef: Ref<any>;
-  refFromInfiniteLoader: Ref<any>;
-  onItemsRendered: (props: ListOnItemsRenderedProps) => any;
+  listContainerElRef: Ref<unknown>;
+  listRef: Ref<unknown>;
+  refFromInfiniteLoader: Ref<unknown>;
+  onItemsRendered: (props: ListOnItemsRenderedProps) => unknown;
 }
 
 function ListWrapper(props: IListWrapperProps) {
