@@ -32,9 +32,9 @@ export function showContextMenu(items: ReactElement<IContextMenuProps>): void {
     (child) => {
       if (!child || typeof child !== "object" || !("type" in child)) return;
       if (child.type === ContextMenuItem) {
-        handlers.push(child.props.onClick);
+        handlers.push((child.props as IContextMenuItemProps).onClick);
         return {
-          label: child.props.label as string,
+          label: (child.props as IContextMenuItemProps).label,
         };
       }
       if (child.type === ContextMenuSeparator) {

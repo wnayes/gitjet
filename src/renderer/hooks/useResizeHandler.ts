@@ -1,10 +1,10 @@
 import { RefObject, useEffect, useRef } from "react";
 
 export function useResizeHandler(
-  elementRef: RefObject<HTMLElement | undefined>,
+  elementRef: RefObject<HTMLElement | null | undefined>,
   callback: VoidFunction
 ): void {
-  const callbackRef = useRef<VoidFunction>();
+  const callbackRef = useRef<VoidFunction>(callback);
   callbackRef.current = callback;
 
   useEffect(() => {

@@ -32,7 +32,7 @@ export const DataList = ({ height, width }: IDataListProps) => {
   );
 
   const listRef = useRef<FixedSizeList<any> | null>(null);
-  const listContainerElRef = useRef<HTMLDivElement>();
+  const listContainerElRef = useRef<HTMLDivElement | null>(null);
 
   const setSelectedRevision = useGitStore((state) => state.setSelectedRevision);
 
